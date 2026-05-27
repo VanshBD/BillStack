@@ -1,0 +1,9 @@
+mixin itemsTable(model, translate, moneyFormatter)
+  each item in model.items
+    tr
+      td.service #{item.itemName}
+        if item.description
+          span #{item.description}
+      td.qty #{item.quantity}
+      td.unit #{moneyFormatter({amount: item.price})}
+      td.total #{moneyFormatter({amount: item.total})}

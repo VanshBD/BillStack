@@ -1,0 +1,19 @@
+mixin bankDetails(model, settings, translate)
+  - var bank = (model.selectedBankDetails && model.selectedBankDetails.bankName) ? model.selectedBankDetails : null
+  .bank-details
+    h4 #{translate('Bank Details')}
+    p
+      strong #{translate('Bank')} :
+      |  #{(bank && bank.bankName) || settings.company_bank_name || ''}
+    p
+      strong #{translate('Account')} :
+      |  #{(bank && bank.bankAccount) || settings.company_bank_account || ''}
+    p
+      strong #{translate('Branch')} :
+      |  #{(bank && bank.bankBranch) || settings.company_bank_branch || ''}
+    p
+      strong #{translate('IFSC')} :
+      |  #{(bank && bank.bankIfsc) || settings.company_bank_ifsc || ''}
+    p
+      strong #{translate('Account Holder')} :
+      |  #{(bank && bank.accountHolderName) || settings.company_account_holder_name || ''}

@@ -1,0 +1,418 @@
+extends layout
+
+block content
+  - var party     = model.party || model.client || model.lead || {}
+  - var calc      = model.calculation || {}
+  - var subTotal  = calc.subTotal  !== undefined ? calc.subTotal  : (model.subTotal  || 0)
+  - var taxRate   = calc.taxRate   !== undefined ? calc.taxRate   : (model.taxRate   || 0)
+  - var taxAmount = calc.taxAmount !== undefined ? calc.taxAmount : (model.taxTotal  || 0)
+  - var total     = calc.total     !== undefined ? calc.total     : (model.total     || 0)
+  - var isCGST    = (model.taxType === 'CGST_SGST' || (calc.taxType === 'CGST_SGST'))
+  - var showShip  = (settings.pdf_show_ship_to  !== false && settings.pdf_show_ship_to  !== 'false')
+  - var showSig   = (settings.pdf_show_authorized_signatory !== false && settings.pdf_show_authorized_signatory !== 'false')
+  - var bank      = (model.selectedBankDetails && model.selectedBankDetails.bankName) ? model.selectedBankDetails : null
+  - var shipTo    = model.shipTo || party
+  - var halfTax   = parseFloat((taxAmount / 2).toFixed(2))
+  - var docTitle  = translate(docConfig.title) || 'Tax Invoice'
+
+  //- Filler rows so items table always has at least 3 rows
+  - var fillers = []
+  - var need    = Math.max(0, 3 - (model.items ? model.items.length : 0))
+  - for(var _i = 0; _i < need; _i++){ fillers.push(_i); }
+
+  //- ══════════════════════════════════════════════════════════════
+  //- 1. HEADER
+  //- ══════════════════════════════════════════════════════════════
+  .header-wrap
+    table(cellspacing="0" cellpadding="0" style="width:100%; border:none; border-collapse:collapse; table-layout:fixed;")
+      colgroup
+        if settings.company_logo
+          col(style="width:15%")
+          col(style="width:54%")
+        else
+          col(style="width:69%")
+        col(style="width:31%")
+      tbody
+        tr
+          if settings.company_logo
+            td(style="border:none; padding:0; vertical-align:top; padding-right:3%;")
+              img.header-logo(src=settings.public_server_file + settings.company_logo)
+          td(style="border:none; padding:0; vertical-align:top;")
+            .company-name #{settings.company_name}
+            if settings.company_address
+              .company-detail #{settings.company_address}
+            if settings.company_state || settings.company_country
+              .company-detail
+                if settings.company_state
+                  span #{settings.company_state}
+                  if settings.company_pin_code
+                    |  - #{settings.company_pin_code}
+                if settings.company_country
+                  | , #{settings.company_country}
+            .company-contact
+              if settings.company_phone
+                span(style="margin-right:5mm;")
+                  strong Phone:
+                  |  #{settings.company_phone}
+              if settings.company_email
+                span
+                  strong Email:
+                  |  #{settings.company_email}
+            if settings.company_gst_number
+              .company-gstin GSTIN: #{settings.company_gst_number}
+
+          td(style="border:none; padding:0; vertical-align:top; padding-left:2%;")
+            .meta-box
+              .meta-row
+                span.meta-label #{translate('Number')} :
+                span(style="font-weight:700;") &nbsp;##{model.number}/#{model.year || ""}
+              .meta-row
+                span.meta-label #{translate('Date')} :
+                span &nbsp;#{moment(model.date).format(dateFormat)}
+              if docConfig.showExpiredDate && model.expiredDate
+                .meta-row
+                  span.meta-label #{translate('Due Date')} :
+                  span &nbsp;#{moment(model.expiredDate).format(dateFormat)}
+              .meta-row
+                span.meta-label State :
+                span &nbsp;#{settings.company_state || ''} #{settings.company_state_code ? '(' + settings.company_state_code + ')' : ''}
+
+  //- ══════════════════════════════════════════════════════════════
+  //- 2. TITLE BAR
+  //- ══════════════════════════════════════════════════════════════
+  .doc-title-bar #{docTitle}
+
+  //- ══════════════════════════════════════════════════════════════
+  //- 3. BILL TO / SHIP TO
+  //- ══════════════════════════════════════════════════════════════
+  table.info-section-table(cellspacing="0" cellpadding="0" style="margin-bottom:5mm;")
+    if showShip
+      colgroup
+        col(style="width:48.5%")
+        col(style="width:3%")
+        col(style="width:48.5%")
+    else
+      colgroup
+        col(style="width:100%")
+    tbody
+      tr
+        td(style="vertical-align:top; padding:0;")
+          .info-box.bill-to
+            .info-box-header #{translate('Bill To')} (Billing Address)
+            .info-box-body
+              table.lv-table
+                tbody
+                  tr
+                    td.lv-label Name:
+                    td(style="font-weight:700; color:#0f172a; font-size:12pt; line-height:1.4;") #{party.name}
+                  if party.address
+                    tr
+                      td.lv-label Address:
+                      td(style="font-size:11pt;") #{party.address}
+                  if party.state
+                    tr
+                      td.lv-label State:
+                      td #{party.state} #{party.stateCode ? '(' + party.stateCode + ')' : ''}
+                  if party.gst || party.gstNumber
+                    tr
+                      td.lv-label GSTIN:
+                      td(style="font-weight:700; color:#0f172a;") #{party.gst || party.gstNumber}
+                  if party.phone
+                    tr
+                      td.lv-label Phone:
+                      td #{party.phone}
+
+        if showShip
+          td(style="padding:0; border:none;") &nbsp;
+          td(style="vertical-align:top; padding:0;")
+            .info-box.ship-to
+              .info-box-header #{translate('Ship To')} (Shipping Address)
+              .info-box-body
+                table.lv-table
+                  tbody
+                    tr
+                      td.lv-label Name:
+                      td(style="font-weight:700; color:#0f172a; font-size:12pt; line-height:1.4;") #{shipTo.name || party.name}
+                    tr
+                      td.lv-label Address:
+                      td(style="font-size:11pt;") #{shipTo.shippingAddress || shipTo.address || party.shippingAddress || party.address || 'Same as billing address'}
+                    if shipTo.state || party.state
+                      tr
+                        td.lv-label State:
+                        td #{shipTo.state || party.state} #{(shipTo.stateCode || party.stateCode) ? '(' + (shipTo.stateCode || party.stateCode) + ')' : ''}
+                    if shipTo.gst || party.gst || party.gstNumber
+                      tr
+                        td.lv-label GSTIN:
+                        td(style="font-weight:700; color:#0f172a;") #{shipTo.gst || party.gst || party.gstNumber}
+                    if shipTo.phone || party.phone
+                      tr
+                        td.lv-label Phone:
+                        td #{shipTo.phone || party.phone}
+
+  //- ══════════════════════════════════════════════════════════════
+  //- 4. ITEMS TABLE
+  //- ══════════════════════════════════════════════════════════════
+  if docConfig.showItemsTable
+    table.items-table(cellspacing="0" cellpadding="0")
+      if isCGST
+        colgroup
+          col(style="width:4%")
+          col(style="width:20%")
+          col(style="width:7%")
+          col(style="width:5%")
+          col(style="width:5%")
+          col(style="width:9%")
+          col(style="width:9%")
+          col(style="width:9%")
+          col(style="width:4%")
+          col(style="width:6%")
+          col(style="width:4%")
+          col(style="width:6%")
+          col(style="width:12%")
+      else
+        colgroup
+          col(style="width:4%")
+          col(style="width:26%")
+          col(style="width:8%")
+          col(style="width:5%")
+          col(style="width:5%")
+          col(style="width:9%")
+          col(style="width:9%")
+          col(style="width:9%")
+          col(style="width:5%")
+          col(style="width:8%")
+          col(style="width:12%")
+
+      thead
+        tr
+          th S.No.
+          th.text-left Product Name &amp; Description
+          th HSN Code
+          th Unit
+          th Qty
+          th Rate
+          th Amount
+          th Taxable Value
+          if isCGST
+            th CGST %
+            th CGST Amt
+            th SGST %
+            th SGST Amt
+          else
+            th IGST %
+            th IGST Amt
+          th Total
+
+      tbody
+        if model.items
+          each item, idx in model.items
+            - var iTaxRate  = item.taxRate !== undefined ? item.taxRate : taxRate
+            - var iQty      = item.quantity || 0
+            - var iPrice    = item.price || 0
+            - var iAmount   = iQty * iPrice
+            - var iTaxable  = iAmount
+            - var iTaxAmt   = iTaxable * (iTaxRate / 100)
+            - var iRowTotal = iTaxable + iTaxAmt
+            - var iHalfRate = parseFloat((iTaxRate / 2).toFixed(2))
+            - var iHalfAmt  = parseFloat((iTaxAmt / 2).toFixed(2))
+
+            tr
+              td.text-center #{idx + 1}
+              td.text-left
+                div(style="font-weight:700; color:#0f172a; font-size:11.5pt; line-height:1.4;") #{item.itemName}
+                if item.description && item.description.trim() !== ''
+                  div(style="font-size:9.5pt; color:#64748b; margin-top:0.8mm; line-height:1.35;") #{item.description}
+              td.text-center #{item.hsnCode || '-'}
+              td.text-center #{item.unit || 'PCS'}
+              td.text-center #{iQty}
+              td.text-right #{moneyFormatter({amount: iPrice})}
+              td.text-right #{moneyFormatter({amount: iAmount})}
+              td.text-right #{moneyFormatter({amount: iTaxable})}
+              if isCGST
+                td.text-center #{iHalfRate}%
+                td.text-right #{moneyFormatter({amount: iHalfAmt})}
+                td.text-center #{iHalfRate}%
+                td.text-right #{moneyFormatter({amount: iHalfAmt})}
+              else
+                td.text-center #{iTaxRate}%
+                td.text-right #{moneyFormatter({amount: iTaxAmt})}
+              td.text-right(style="font-weight:600;") #{moneyFormatter({amount: iRowTotal})}
+
+        each f in fillers
+          tr.empty-row
+            td &nbsp;
+            td &nbsp;
+            td &nbsp;
+            td &nbsp;
+            td &nbsp;
+            td &nbsp;
+            td &nbsp;
+            td &nbsp;
+            if isCGST
+              td &nbsp;
+              td &nbsp;
+              td &nbsp;
+              td &nbsp;
+            else
+              td &nbsp;
+              td &nbsp;
+            td &nbsp;
+
+        tr.total-row
+          td.text-center(colspan="2" style="font-weight:700; text-align:center;") TOTALS
+          td &nbsp;
+          td &nbsp;
+          td.text-center #{model.items ? model.items.reduce(function(s,i){return s+(i.quantity||0);}, 0) : 0}
+          td &nbsp;
+          td.text-right #{moneyFormatter({amount: subTotal})}
+          td.text-right #{moneyFormatter({amount: subTotal})}
+          if isCGST
+            td &nbsp;
+            td.text-right #{moneyFormatter({amount: halfTax})}
+            td &nbsp;
+            td.text-right #{moneyFormatter({amount: halfTax})}
+          else
+            td &nbsp;
+            td.text-right #{moneyFormatter({amount: taxAmount})}
+          td.text-right #{moneyFormatter({amount: total})}
+
+  //- ══════════════════════════════════════════════════════════════
+  //- 5. LEFT: Words + Bank Details | RIGHT: Grand Total + Certified
+  //- ══════════════════════════════════════════════════════════════
+  table.bottom-table(cellspacing="0" cellpadding="0" style="margin-bottom:5mm;")
+    colgroup
+      col(style="width:55%")
+      col(style="width:3%")
+      col(style="width:42%")
+    tbody
+      tr
+        //- LEFT: Amount in words — Bank Account Details below
+        td(style="vertical-align:top; padding:0;")
+          if total > 0
+            .words-block(style="margin-bottom:4mm;")
+              .words-label Total Amount in Words:
+              .words-value #{numberToWordsIndian(total)}
+          if bank || settings.company_bank_name
+            .info-box.bank-box
+              .info-box-header Bank Account Details
+              .info-box-body
+                table.bank-detail-table(cellspacing="0" cellpadding="0")
+                  tbody
+                    if (bank && bank.bankName) || settings.company_bank_name
+                      tr
+                        td.bank-label Bank Name:
+                        td #{(bank && bank.bankName) || settings.company_bank_name || ''}
+                    if (bank && bank.bankAccount) || settings.company_bank_account
+                      tr
+                        td.bank-label Account Number:
+                        td(style="font-weight:700; color:#0f172a; font-family:monospace;") #{(bank && bank.bankAccount) || settings.company_bank_account || ''}
+                    if (bank && bank.bankBranch) || settings.company_bank_branch
+                      tr
+                        td.bank-label Bank Branch:
+                        td #{(bank && bank.bankBranch) || settings.company_bank_branch || ''}
+                    if (bank && bank.bankIfsc) || settings.company_bank_ifsc
+                      tr
+                        td.bank-label IFSC Code:
+                        td(style="font-weight:700; color:#0f172a; font-family:monospace;") #{(bank && bank.bankIfsc) || settings.company_bank_ifsc || ''}
+
+        //- SPACER
+        td(style="padding:0; border:none;") &nbsp;
+
+        //- RIGHT: Grand Total summary — Certified text below
+        td(style="vertical-align:top; padding:0;")
+          table.summary-table(cellspacing="0" cellpadding="0" style="margin-bottom:4mm;")
+            colgroup
+              col(style="width:55%")
+              col(style="width:45%")
+            tbody
+              tr
+                td(style="color:#475569;") Amount Before Tax
+                td.text-right #{moneyFormatter({amount: subTotal})}
+              if docConfig.showTax
+                if isCGST
+                  tr
+                    td(style="color:#475569;") Add: CGST (#{(taxRate/2)}%)
+                    td.text-right #{moneyFormatter({amount: halfTax})}
+                  tr
+                    td(style="color:#475569;") Add: SGST (#{(taxRate/2)}%)
+                    td.text-right #{moneyFormatter({amount: halfTax})}
+                else
+                  tr
+                    td(style="color:#475569;") Add: IGST (#{taxRate}%)
+                    td.text-right #{moneyFormatter({amount: taxAmount})}
+                tr
+                  td.subtotal-label-row(style="font-weight:700; color:#0f172a;") Total GST Amount
+                  td.text-right.subtotal-label-row(style="font-weight:700;") #{moneyFormatter({amount: taxAmount})}
+              tr.grand-total-row
+                td Grand Total
+                td.text-right #{moneyFormatter({amount: total})}
+          .certified-text Certified that the particulars given above are true and correct.
+
+  //- ══════════════════════════════════════════════════════════════
+  //- 6. TERMS & CONDITIONS (full width, below the main block)
+  //- ══════════════════════════════════════════════════════════════
+  if docConfig.showTerms && model.termsAndConditions
+    - var termsText  = model.termsAndConditions || ''
+    - var termsLines = termsText.split('\n').filter(function(l){return l.trim();})
+    .info-box.terms-box(style="margin-bottom:5mm;")
+      .info-box-header Terms &amp; Conditions
+      .info-box-body
+        ul.terms-list
+          each line in termsLines
+            li
+              span.terms-bullet &#8226;
+              | &nbsp;#{line}
+
+
+  //- ══════════════════════════════════════════════════════════════
+  //- 8. SIGNATURE
+  //- ══════════════════════════════════════════════════════════════
+  if showSig
+    .signature-container
+      table.sig-outer-table(cellspacing="0" cellpadding="0")
+        colgroup
+          col(style="width:60%")
+          col(style="width:40%")
+        tbody
+          tr
+            td(style="border:none; padding:0;") &nbsp;
+            td(style="border:none; padding:0; text-align:right;")
+              table.sig-block-table(cellspacing="0" cellpadding="0" style="float:right;")
+                tbody
+                  tr
+                    td.sig-name-cell For, #{settings.company_name}
+                  tr
+                    td.sig-space-cell &nbsp;
+                  tr
+                    td.sig-line-cell Authorised Signatory
+
+  //- ══════════════════════════════════════════════════════════════
+  //- 9. PAYMENT RECEIPT (only for payment docs)
+  //- ══════════════════════════════════════════════════════════════
+  if docConfig.showPaymentSummary
+    div(style="margin-top:6mm; border:0.3mm solid #0f172a; border-radius:1.5mm; background:#f8fafc; padding:4mm 5mm;")
+      div(style="font-size:12pt; font-weight:800; text-transform:uppercase; color:#0f172a; border-bottom:0.3mm solid #94a3b8; padding-bottom:2mm; margin-bottom:3mm; letter-spacing:0.3px;") Payment Confirmation Receipt
+      table(cellspacing="0" cellpadding="0" style="width:100%; border:none; border-collapse:collapse; table-layout:fixed;")
+        colgroup
+          col(style="width:55mm")
+          col
+        tbody
+          tr
+            td(style="border:none; padding:1.5mm 0; font-weight:700; color:#475569; font-size:11pt;") Amount Received:
+            td(style="border:none; padding:1.5mm 0; font-weight:800; font-size:12pt; color:#0f172a;") #{moneyFormatter({amount: model.amount})}
+          if model.paymentMode && model.paymentMode.name
+            tr
+              td(style="border:none; padding:1.5mm 0; font-weight:700; color:#475569; font-size:11pt;") Payment Method:
+              td(style="border:none; padding:1.5mm 0; font-size:11pt;") #{model.paymentMode.name}
+          if model.ref
+            tr
+              td(style="border:none; padding:1.5mm 0; font-weight:700; color:#475569; font-size:11pt;") Transaction Reference:
+              td(style="border:none; padding:1.5mm 0; font-family:monospace; font-weight:700; font-size:11pt;") #{model.ref}
+          if model.description
+            tr
+              td(style="border:none; padding:1.5mm 0; font-weight:700; color:#475569; font-size:11pt;") Description / Notes:
+              td(style="border:none; padding:1.5mm 0; font-size:11pt;") #{model.description}
+          if model.invoice && model.invoice.number
+            tr
+              td(style="border:none; padding:1.5mm 0; font-weight:700; color:#475569; font-size:11pt;") Associated Invoice:
+              td(style="border:none; padding:1.5mm 0; font-weight:700; font-size:11pt;") Invoice ##{model.invoice.number}/#{model.invoice.year || ""}

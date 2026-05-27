@@ -1,0 +1,4 @@
+mixin terms(model, translate)
+  .terms-conditions
+    h4 #{translate('Terms & Conditions')}
+    p #{model.termsAndConditions || translate('Payment is due within 30 days. Late payment is subject to fees.')}

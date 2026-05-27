@@ -1,0 +1,125 @@
+.moneyInput {
+  width: 100%;
+}
+
+.moneyInput input {
+  text-align: right;
+}
+
+/* Premium ERP Invoice & Quote Form Styling */
+.invoice-form-container {
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.invoice-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f1f5f9;
+  gap: 48px;
+}
+
+.invoice-client-info {
+  flex: 1.2;
+  max-width: 460px;
+}
+
+.invoice-details-info {
+  flex: 0.8;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.invoice-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #475569;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.invoice-items-section {
+  margin: 32px 0;
+}
+
+.invoice-items-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #cbd5e1;
+  margin-bottom: 16px;
+}
+
+.invoice-item-row {
+  margin-bottom: 0px;
+  position: relative;
+}
+
+.add-item-btn {
+  margin-top: 12px;
+  height: 40px;
+  border-radius: 8px;
+  border-style: dashed;
+  font-weight: 500;
+}
+
+.invoice-footer-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  margin-top: 32px;
+}
+
+.invoice-footer-left {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invoice-footer-right {
+  flex: 0.8;
+  max-width: 420px;
+  background: #f8fafc;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 14px;
+  color: #475569;
+  width: 100%;
+}
+
+.summary-item.total {
+  border-bottom: none;
+  padding: 16px 0 0 0;
+  margin-top: 8px;
+  font-weight: 700;
+  color: #0f172a;
+}
+

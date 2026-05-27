@@ -1,0 +1,20 @@
+[
+  {
+    "bankName": "Bank of America",
+    "accountNumber": "1234567890123456",
+    "accountHolderName": "Company Account Holder",
+    "branchName": "Main Branch",
+    "ifscCode": "BOFA0US001",
+    "isDefault": true,
+    "description": "Primary business account"
+  },
+  {
+    "bankName": "Chase Bank",
+    "accountNumber": "9876543210987654",
+    "accountHolderName": "Company Account Holder",
+    "branchName": "Business Branch",
+    "ifscCode": "CHAS0US002",
+    "isDefault": false,
+    "description": "Secondary business account"
+  }
+]

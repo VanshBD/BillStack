@@ -1,0 +1,394 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    style.
+      *, *:before, *:after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body {
+        width: 100%;
+        background: #fff;
+        color: #1e293b;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 13pt;
+        line-height: 1.5;
+      }
+
+      /* ── Global table reset ── */
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        table-layout: fixed;
+      }
+      td, th {
+        border: 0.3mm solid #cbd5e1;
+        padding: 2.5mm 2.8mm;
+        font-size: 12pt;
+        vertical-align: middle;
+        word-break: break-word;
+        overflow-wrap: break-word;
+      }
+      th {
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 10.5pt;
+        background: #1e293b;
+        color: #ffffff;
+        text-align: center;
+        border: 0.3mm solid #334155;
+        padding: 2.5mm 2mm;
+        white-space: normal;
+        line-height: 1.35;
+      }
+
+      .text-left   { text-align: left   !important; }
+      .text-right  { text-align: right  !important; }
+      .text-center { text-align: center !important; }
+
+      /* ── HEADER ── */
+      .header-wrap {
+        width: 100%;
+        margin-bottom: 5mm;
+        padding-bottom: 4mm;
+        border-bottom: 0.4mm solid #e2e8f0;
+      }
+      .header-wrap table { border: none; }
+      .header-wrap td    { border: none; padding: 0; vertical-align: top; }
+
+      .header-logo {
+        width: 100%;
+        max-width: 30mm;
+        max-height: 22mm;
+        object-fit: contain;
+        display: block;
+      }
+
+      .company-name {
+        font-size: 18pt;
+        font-weight: 800;
+        color: #0f172a;
+        text-transform: uppercase;
+        margin-bottom: 1.5mm;
+        letter-spacing: 0;
+        line-height: 1.2;
+      }
+      .company-detail {
+        font-size: 11pt;
+        color: #475569;
+        line-height: 1.5;
+        margin-bottom: 0.5mm;
+      }
+      .company-contact {
+        font-size: 10.5pt;
+        color: #475569;
+        margin-top: 1mm;
+        line-height: 1.55;
+      }
+      .company-contact strong {
+        color: #1e293b;
+        font-weight: 700;
+      }
+      .company-gstin {
+        font-size: 11pt;
+        font-weight: 700;
+        color: #0f172a;
+        margin-top: 1mm;
+      }
+
+      .meta-box {
+        border: 0.3mm solid #cbd5e1;
+        border-left: 2mm solid #0f172a;
+        background: #f8fafc;
+        padding: 3mm 3.5mm;
+        border-radius: 1.5mm;
+      }
+      .meta-row {
+        margin-bottom: 1.8mm;
+        font-size: 11pt;
+        color: #334155;
+        line-height: 1.45;
+      }
+      .meta-row:last-child { margin-bottom: 0; }
+      .meta-label {
+        font-weight: 700;
+        display: inline-block;
+        width: 24mm;
+        color: #0f172a;
+        vertical-align: top;
+      }
+
+      /* ── TITLE BAR ── */
+      .doc-title-bar {
+        width: 100%;
+        text-align: center;
+        font-size: 15pt;
+        font-weight: 800;
+        padding: 3mm 0;
+        background: #1e3a8a;
+        color: #ffffff;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 5mm;
+        border-radius: 1mm;
+        line-height: 1.35;
+      }
+
+      /* ── INFO BOXES ── */
+      .info-section-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 5mm;
+        table-layout: fixed;
+      }
+      .info-section-table > tbody > tr > td {
+        border: none;
+        padding: 0;
+        vertical-align: top;
+      }
+
+      .info-box {
+        border: 0.3mm solid #cbd5e1;
+        border-left: 2mm solid #2563eb;
+        border-radius: 1.5mm;
+        background: #f8fafc;
+        width: 100%;
+      }
+      .info-box.ship-to   { border-left-color: #4f46e5; }
+      .info-box.bank-box  { border-left-color: #059669; }
+      .info-box.terms-box { border-left-color: #d97706; }
+
+      .info-box-header {
+        background: #f1f5f9;
+        padding: 2.2mm 3.5mm;
+        font-weight: 700;
+        font-size: 11pt;
+        border-bottom: 0.3mm solid #cbd5e1;
+        text-transform: uppercase;
+        color: #0f172a;
+        line-height: 1.4;
+        letter-spacing: 0;
+      }
+      .info-box-body {
+        padding: 3mm 3.5mm;
+        font-size: 11pt;
+        color: #334155;
+        line-height: 1.55;
+      }
+
+      /* Label-value table inside info boxes */
+      .lv-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        margin-top: 1.5mm;
+      }
+      .lv-table td {
+        border: none;
+        padding: 0.6mm 0;
+        font-size: 11pt;
+        color: #334155;
+        vertical-align: top;
+        line-height: 1.5;
+      }
+      .lv-label {
+        font-weight: 700;
+        color: #475569;
+        width: 28mm;
+        white-space: nowrap;
+      }
+
+      /* ── ITEMS TABLE ── */
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        margin-bottom: 5mm;
+      }
+      .items-table td {
+        padding: 2.5mm 2mm;
+        vertical-align: middle;
+        border: 0.3mm solid #cbd5e1;
+        font-size: 11.5pt;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.45;
+      }
+      .items-table tr:nth-child(even) td {
+        background: #f8fafc;
+      }
+      .items-table .empty-row td {
+        height: 8mm;
+        padding: 0;
+        background: #fff;
+      }
+      .items-table .total-row td {
+        background: #f1f5f9;
+        font-weight: 700;
+        font-size: 12pt;
+        border-top: 0.5mm solid #1e293b;
+        border-bottom: 0.5mm solid #1e293b;
+        color: #0f172a;
+        padding: 2.5mm 2mm;
+      }
+
+      /* ── BOTTOM SECTION ── */
+      .bottom-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        margin-bottom: 5mm;
+      }
+      .bottom-table > tbody > tr > td {
+        border: none;
+        padding: 0;
+        vertical-align: top;
+      }
+
+      /* ── WORDS BLOCK ── */
+      .words-block {
+        border: 0.4mm dashed #94a3b8;
+        background: #f0f7ff;
+        padding: 3mm 3.5mm;
+        font-size: 11pt;
+        border-radius: 1.5mm;
+        line-height: 1.5;
+        width: 100%;
+      }
+      .words-label {
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 1.5mm;
+        font-size: 10.5pt;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .words-value {
+        font-style: italic;
+        color: #1e293b;
+        font-weight: 600;
+        font-size: 12pt;
+        line-height: 1.5;
+      }
+      .certified-text {
+        font-style: italic;
+        color: #475569;
+        font-size: 11pt;
+        margin-top: 4mm;
+        font-weight: 600;
+        line-height: 1.45;
+      }
+
+      /* ── SUMMARY TABLE ── */
+      .summary-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 0.3mm solid #cbd5e1;
+        border-radius: 1mm;
+      }
+      .summary-table td {
+        border: 0.3mm solid #e2e8f0;
+        padding: 2.2mm 2.8mm;
+        font-size: 11pt;
+        color: #334155;
+        word-break: break-word;
+        line-height: 1.45;
+      }
+      .summary-table .grand-total-row td {
+        background: #eff6ff;
+        color: #1e40af;
+        font-weight: 800;
+        font-size: 13pt;
+        border-top: 0.5mm solid #3b82f6;
+        border-bottom: 0.5mm solid #3b82f6;
+        padding: 2.5mm 2.8mm;
+      }
+      .summary-table .subtotal-label-row td {
+        font-weight: 700;
+        color: #0f172a;
+        border-top: 0.3mm solid #cbd5e1;
+      }
+
+      /* ── TERMS LIST — inline bullet (no position:absolute for PhantomJS) ── */
+      .terms-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .terms-list li {
+        padding: 1mm 0;
+        font-size: 11pt;
+        color: #334155;
+        line-height: 1.5;
+      }
+      .terms-bullet {
+        color: #d97706;
+        font-weight: 900;
+        margin-right: 2mm;
+        font-size: 13pt;
+      }
+
+      /* ── BANK DETAILS INNER TABLE ── */
+      .bank-detail-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+      .bank-detail-table td {
+        border: none;
+        padding: 0.8mm 0;
+        font-size: 11pt;
+        color: #334155;
+        vertical-align: top;
+        line-height: 1.5;
+      }
+      .bank-label {
+        font-weight: 700;
+        color: #475569;
+        width: 36mm;
+        white-space: nowrap;
+      }
+
+      /* ── SIGNATURE ── */
+      .signature-container {
+        width: 100%;
+        margin-top: 7mm;
+        padding-top: 5mm;
+        border-top: 0.3mm solid #cbd5e1;
+      }
+      .sig-outer-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: none;
+      }
+      .sig-outer-table td { border: none; padding: 0; }
+      .sig-block-table {
+        border-collapse: collapse;
+        border: none;
+        width: 65mm;
+        float: right;
+      }
+      .sig-block-table td { border: none; padding: 0; }
+      .sig-name-cell {
+        font-weight: 700;
+        font-size: 12pt;
+        color: #0f172a;
+        text-align: center;
+        padding-bottom: 1.5mm;
+        border: none;
+      }
+      .sig-space-cell {
+        height: 18mm;
+        border: none;
+      }
+      .sig-line-cell {
+        border-top: 0.5mm solid #0f172a !important;
+        padding-top: 2.5mm !important;
+        text-align: center;
+        font-weight: 700;
+        color: #475569;
+        font-size: 10.5pt;
+        border: none;
+      }
+
+  body
+    block content

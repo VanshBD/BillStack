@@ -1,0 +1,14 @@
+[
+  {
+    "settingCategory": "terms_settings",
+    "settingKey": "default_invoice_terms",
+    "settingValue": "1. Payment is due within 30 days.\n2. Late payment is subject to a fee of 1.5% per month.\n3. Goods are sold under the following conditions:\n   - All goods are non-returnable after 7 days.\n   - Warranty applies as per manufacturer terms.\n4. This invoice is subject to the applicable tax laws.",
+    "valueType": "text"
+  },
+  {
+    "settingCategory": "terms_settings",
+    "settingKey": "default_quote_terms",
+    "settingValue": "1. This quote is valid for 30 days.\n2. Prices are subject to change without notice.\n3. Delivery terms are as specified.\n4. Warranty terms apply as per manufacturer.",
+    "valueType": "text"
+  }
+]

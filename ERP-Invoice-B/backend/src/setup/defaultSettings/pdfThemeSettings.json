@@ -1,0 +1,92 @@
+[
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_primary_color",
+    "settingValue": "#52008c",
+    "valueType": "string"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_secondary_color",
+    "settingValue": "#5d6975",
+    "valueType": "string"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_accent_color",
+    "settingValue": "#c2e0f2",
+    "valueType": "string"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_font_size",
+    "settingValue": "12",
+    "valueType": "string"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_font_family",
+    "settingValue": "sans-serif",
+    "valueType": "string"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_show_hsn_code",
+    "settingValue": true,
+    "valueType": "boolean"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_show_ship_to",
+    "settingValue": true,
+    "valueType": "boolean"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_show_transport_details",
+    "settingValue": true,
+    "valueType": "boolean"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_show_authorized_signatory",
+    "settingValue": true,
+    "valueType": "boolean"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_authorized_signatory_label",
+    "settingValue": "Authorised Signatory",
+    "valueType": "string"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_show_amount_in_words",
+    "settingValue": true,
+    "valueType": "boolean"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_show_reverse_charge",
+    "settingValue": true,
+    "valueType": "boolean"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_invoice_title",
+    "settingValue": "Tax Invoice",
+    "valueType": "string"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_table_border_color",
+    "settingValue": "#cccccc",
+    "valueType": "string"
+  },
+  {
+    "settingCategory": "pdf_theme_settings",
+    "settingKey": "pdf_header_bg_color",
+    "settingValue": "#f0e6ff",
+    "valueType": "string"
+  }
+]

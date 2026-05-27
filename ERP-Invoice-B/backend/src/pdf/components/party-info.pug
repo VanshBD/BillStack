@@ -1,0 +1,14 @@
+mixin partyInfo(party, label, translate)
+  .right.col-10
+    .billTo
+      p.strong #{translate(label)} :
+      if party && party.name
+        p #{party.name}
+      if party && party.address
+        p #{party.address}
+      if party && party.phone
+        p #{party.phone}
+      if party && party.email
+        p #{party.email}
+      if party && party.gst
+        p GST: #{party.gst}

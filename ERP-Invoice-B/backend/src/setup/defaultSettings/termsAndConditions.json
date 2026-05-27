@@ -1,0 +1,17 @@
+[
+  {
+    "title": "Standard Invoice Terms",
+    "content": "1. Payment is due within 30 days from invoice date.\n2. Late payment is subject to a fee of 1.5% per month.\n3. Goods are sold under the following conditions:\n   - All goods are non-returnable after 7 days.\n   - Warranty applies as per manufacturer terms.\n   - Risk of loss passes to buyer upon delivery.\n4. This invoice is subject to the applicable tax laws.\n5. Disputes must be raised in writing within 15 days of receipt.",
+    "isDefault": true
+  },
+  {
+    "title": "Quick Payment Terms",
+    "content": "1. Payment is due within 15 days for 2% discount.\n2. Full payment due within 30 days without discount.\n3. All goods remain seller's property until paid in full.\n4. Buyer is responsible for all shipping and insurance costs.\n5. Prices are firm and subject to change without notice.",
+    "isDefault": false
+  },
+  {
+    "title": "Standard Quote Terms",
+    "content": "1. This quote is valid for 30 days from quote date.\n2. Prices are subject to change without notice.\n3. Delivery terms are FOB shipping point.\n4. Warranty terms apply as per manufacturer specifications.\n5. This quote does not include taxes unless specified.\n6. Lead time: 2-3 weeks from order confirmation.",
+    "isDefault": false
+  }
+]

@@ -1,0 +1,12 @@
+mixin paymentSummary(model, translate, moneyFormatter)
+  .payment-summary
+    .line
+    h3 #{translate('total paid')} : #{moneyFormatter({amount: model.amount})}
+    if model.paymentMode && model.paymentMode.name
+      p #{translate('Payment Mode')} : #{model.paymentMode.name}
+    if model.ref
+      p #{translate('Reference')} : #{model.ref}
+    if model.description
+      p #{translate('Description')} : #{model.description}
+    if model.invoice && model.invoice.number
+      p #{translate('Invoice')} : # #{model.invoice.number}/#{model.invoice.year || ""}

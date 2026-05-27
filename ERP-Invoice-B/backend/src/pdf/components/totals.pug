@@ -1,0 +1,31 @@
+mixin totals(model, docConfig, translate, moneyFormatter)
+  - var calc = model.calculation || {}
+  - var taxType = calc.taxType || 'SINGLE'
+  - var subTotal = calc.subTotal !== undefined ? calc.subTotal : model.subTotal
+  - var taxRate  = calc.taxRate  !== undefined ? calc.taxRate  : model.taxRate
+  - var taxAmount = calc.taxAmount !== undefined ? calc.taxAmount : model.taxTotal
+  - var total    = calc.total    !== undefined ? calc.total    : model.total
+  - var discount = model.discount || 0
+  tr
+    td(colspan='3') #{translate('SUB TOTAL')}
+    td.total #{moneyFormatter({amount: subTotal})}
+  if discount > 0
+    tr
+      td(colspan='3') #{translate('Discount')}
+      td.total -#{moneyFormatter({amount: discount})}
+  if docConfig.showTax
+    if taxType === 'CGST_SGST'
+      - var half = parseFloat((taxAmount / 2).toFixed(2))
+      tr.tax-row
+        td(colspan='3') CGST (#{taxRate / 2}%)
+        td.total #{moneyFormatter({amount: half})}
+      tr.tax-row
+        td(colspan='3') SGST (#{taxRate / 2}%)
+        td.total #{moneyFormatter({amount: half})}
+    else
+      tr.tax-row
+        td(colspan='3') #{translate('TAX')} #{taxRate}%
+        td.total #{moneyFormatter({amount: taxAmount})}
+  tr
+    td.grand.total(colspan='3') #{translate('TOTAL')}
+    td.grand.total #{moneyFormatter({amount: total})}

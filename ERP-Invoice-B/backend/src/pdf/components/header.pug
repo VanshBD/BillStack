@@ -1,0 +1,42 @@
+mixin header(model, settings, docConfig, translate, moment, dateFormat)
+  header.clearfix
+    .top-area
+      img.logo.left(src=settings.public_server_file + settings.company_logo)
+      .right.company-info
+        p.strong #{settings.company_name}
+        p #{settings.company_address}
+        if settings.company_state
+          p #{settings.company_state}
+            if settings.company_state_code
+              |  (#{settings.company_state_code})
+            if settings.company_pin_code
+              |  - #{settings.company_pin_code}
+        if settings.company_country
+          p #{settings.company_country}
+        if settings.company_email
+          p #{settings.company_email}
+        if settings.company_phone
+          p #{settings.company_phone}
+        if settings.company_website
+          p #{settings.company_website}
+        if settings.company_gst_number
+          p.strong GST: #{settings.company_gst_number}
+        if settings.company_vat_number
+          p.strong VAT: #{settings.company_vat_number}
+        if settings.company_reg_number
+          p.strong Reg No: #{settings.company_reg_number}
+    .col.col-24
+      .space
+    .left.col-14
+      h1.doc-title #{translate(docConfig.title)}
+      div
+        .col.col-8
+          p.strong #{translate('Date')} :
+          p #{moment(model.date).format(dateFormat)}
+        if docConfig.showExpiredDate && model.expiredDate
+          .col.col-9
+            p.strong #{translate('Expired Date')} :
+            p #{moment(model.expiredDate).format(dateFormat)}
+        .col.col-7
+          p.strong #{translate('Number')} :
+          p # #{model.number}/#{model.year || ""}
