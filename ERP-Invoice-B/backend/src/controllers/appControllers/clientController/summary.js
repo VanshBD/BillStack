@@ -21,15 +21,21 @@ const summary = async (Model, req, res) => {
   let startDate = currentDate.clone().startOf(defaultType);
   let endDate = currentDate.clone().endOf(defaultType);
 
+  const matchQuery = {
+    removed: false,
+    enabled: true,
+  };
+
+  if (req.admin && req.admin._id) {
+    matchQuery.createdBy = req.admin._id;
+  }
+
   const pipeline = [
     {
       $facet: {
         totalClients: [
           {
-            $match: {
-              removed: false,
-              enabled: true,
-            },
+            $match: matchQuery,
           },
           {
             $count: 'count',
@@ -38,9 +44,8 @@ const summary = async (Model, req, res) => {
         newClients: [
           {
             $match: {
-              removed: false,
+              ...matchQuery,
               created: { $gte: startDate.toDate(), $lte: endDate.toDate() },
-              enabled: true,
             },
           },
           {

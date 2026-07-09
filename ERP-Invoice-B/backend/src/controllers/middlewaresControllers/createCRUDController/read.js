@@ -1,9 +1,16 @@
 const read = async (Model, req, res) => {
-  // Find document by id
-  const result = await Model.findOne({
+  const query = {
     _id: req.params.id,
     removed: false,
-  }).exec();
+  };
+
+  // If the model has a createdBy field, restrict it to the current admin
+  if (Model.schema.paths.createdBy && req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
+
+  // Find document by id
+  const result = await Model.findOne(query).exec();
   // If no results found, return document not found
   if (!result) {
     return res.status(404).json({

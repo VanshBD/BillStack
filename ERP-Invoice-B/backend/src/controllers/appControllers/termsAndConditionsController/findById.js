@@ -6,7 +6,7 @@ const findById = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const terms = await Model.findOne({ _id: id, removed: false })
+    const terms = await Model.findOne({ _id: id, removed: false, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) })
       .populate('createdBy', 'name email');
     
     if (!terms) {

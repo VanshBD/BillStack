@@ -20,36 +20,64 @@ export const localStorageHealthCheck = async () => {
       }
     } catch (error) {
       window.localStorage.clear();
-      // Handle the exception here
       console.error('window.localStorage Exception occurred:', error);
-      // You can choose to ignore certain exceptions or take other appropriate actions
+    }
+  }
+  for (var j = 0; j < sessionStorage.length; ++j) {
+    try {
+      const result = window.sessionStorage.getItem(sessionStorage.key(j));
+      if (!isJsonString(result)) {
+        window.sessionStorage.removeItem(sessionStorage.key(j));
+      }
+      if (result && Object.keys(sessionStorage.key(j)).length == 0) {
+        window.sessionStorage.removeItem(sessionStorage.key(j));
+      }
+    } catch (error) {
+      window.sessionStorage.clear();
+      console.error('window.sessionStorage Exception occurred:', error);
     }
   }
 };
 
 export const storePersist = {
-  set: (key, state) => {
-    window.localStorage.setItem(key, JSON.stringify(state));
+  set: (key, state, remember = true) => {
+    if (remember) {
+      window.localStorage.setItem(key, JSON.stringify(state));
+      window.sessionStorage.removeItem(key);
+    } else {
+      window.sessionStorage.setItem(key, JSON.stringify(state));
+      window.localStorage.removeItem(key);
+    }
   },
   get: (key) => {
-    const result = window.localStorage.getItem(key);
+    let result = window.sessionStorage.getItem(key);
+    if (!result) {
+      result = window.localStorage.getItem(key);
+    }
+    
     if (!result) {
       return false;
     } else {
       if (!isJsonString(result)) {
         window.localStorage.removeItem(key);
+        window.sessionStorage.removeItem(key);
         return false;
       } else return JSON.parse(result);
     }
   },
   remove: (key) => {
     window.localStorage.removeItem(key);
+    window.sessionStorage.removeItem(key);
   },
   getAll: () => {
-    return window.localStorage;
+    return {
+      ...window.sessionStorage,
+      ...window.localStorage,
+    };
   },
   clear: () => {
     window.localStorage.clear();
+    window.sessionStorage.clear();
   },
 };
 

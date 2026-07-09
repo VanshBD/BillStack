@@ -13,6 +13,7 @@ const filter = async (req, res) => {
       ...(createdBy && { createdBy: mongoose.Types.ObjectId(createdBy) })
     };
 
+    if (req.admin && req.admin._id) filterQuery.createdBy = req.admin._id;
     const results = await Model.find(filterQuery)
       .populate('createdBy', 'name email')
       .sort({ isDefault: -1, created: -1 })

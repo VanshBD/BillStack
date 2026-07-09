@@ -27,17 +27,22 @@ const summary = async (req, res) => {
   let startDate = currentDate.clone().startOf(defaultType);
   let endDate = currentDate.clone().endOf(defaultType);
 
+  const matchQuery = {
+    removed: false,
+    // date: {
+    //   $gte: startDate.toDate(),
+    //   $lte: endDate.toDate(),
+    // },
+  };
+
+  if (req.admin && req.admin._id) {
+    matchQuery.createdBy = req.admin._id;
+  }
+
   // get total amount of invoices
   const result = await Model.aggregate([
     {
-      $match: {
-        removed: false,
-
-        // date: {
-        //   $gte: startDate.toDate(),
-        //   $lte: endDate.toDate(),
-        // },
-      },
+      $match: matchQuery,
     },
     {
       $group: {

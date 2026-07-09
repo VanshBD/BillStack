@@ -4,7 +4,7 @@ const Model = mongoose.model('TermsAndConditions');
 
 const listAll = async (req, res) => {
   try {
-    const terms = await Model.find({ removed: false })
+    const terms = await Model.find({ removed: false, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) })
       .populate('createdBy', 'name email')
       .sort({ isDefault: -1, created: -1 });
 

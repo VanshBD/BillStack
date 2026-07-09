@@ -6,7 +6,7 @@ const read = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const bankAccount = await Model.findOne({ _id: id, removed: false })
+    const bankAccount = await Model.findOne({ _id: id, removed: false, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) })
       .populate('createdBy', 'name email');
     
     if (!bankAccount) {

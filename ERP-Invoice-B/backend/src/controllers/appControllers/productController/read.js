@@ -13,7 +13,7 @@ const read = async (req, res) => {
       });
     }
 
-    const result = await Model.findOne({ _id: id, removed: false })
+    const result = await Model.findOne({ _id: id, removed: false, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) })
       .populate('taxCategory')
       .populate('createdBy')
       .exec();

@@ -15,22 +15,23 @@ methods.create = async (req, res) => {
   const { isDefault } = req.body;
 
   if (isDefault) {
-    await Model.updateMany({}, { isDefault: false });
+    await Model.updateMany({ ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) }, { isDefault: false });
   }
 
   // check duplicate name
-  const existing = await Model.findOne({ name: req.body.name, removed: false });
+  const existing = await Model.findOne({ name: req.body.name, removed: false, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) });
   if (existing) {
     return res.status(400).json({ success: false, result: null, message: 'Payment mode name already exists' });
   }
 
   const countDefault = await Model.countDocuments({
     isDefault: true,
+    ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {})
   });
 
   const result = await new Model({
     ...req.body,
-
+    createdBy: req.admin && req.admin._id ? req.admin._id : null,
     isDefault: countDefault < 1 ? true : false,
   }).save();
 
@@ -59,21 +60,22 @@ methods.update = async (req, res) => {
   const paymentMode = await Model.findOne({
     _id: req.params.id,
     removed: false,
+    ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {})
   }).exec();
   const { isDefault = paymentMode.isDefault, enabled = paymentMode.enabled } = req.body;
 
   // if isDefault:false , we update first - isDefault:true
   // if enabled:false and isDefault:true , we update first - isDefault:true
   if (!isDefault || (!enabled && isDefault)) {
-    await Model.findOneAndUpdate({ _id: { $ne: id }, enabled: true }, { isDefault: true });
+    await Model.findOneAndUpdate({ _id: { $ne: id }, enabled: true, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) }, { isDefault: true });
   }
 
   // if isDefault:true and enabled:true, we update other paymentMode and make is isDefault:false
   if (isDefault && enabled) {
-    await Model.updateMany({ _id: { $ne: id } }, { isDefault: false });
+    await Model.updateMany({ _id: { $ne: id }, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) }, { isDefault: false });
   }
 
-  const paymentModeCount = await Model.countDocuments({});
+  const paymentModeCount = await Model.countDocuments({ ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) });
 
   // if enabled:false and it's only one exist, we can't disable
   if ((!enabled || !isDefault) && paymentModeCount <= 1) {

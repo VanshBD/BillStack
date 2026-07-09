@@ -15,6 +15,7 @@ const filter = async (req, res) => {
     }
 
     // Execute filtered query
+    if (req.admin && req.admin._id) queryConditions.createdBy = req.admin._id;
     const results = await Model.find(queryConditions)
       .skip(skip)
       .limit(parseInt(limit))

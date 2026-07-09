@@ -29,16 +29,21 @@ const summary = async (req, res) => {
 
   const statuses = ['draft', 'pending', 'sent', 'expired', 'declined', 'accepted'];
 
+  const matchQuery = {
+    removed: false,
+    // date: {
+    //   $gte: startDate.toDate(),
+    //   $lte: endDate.toDate(),
+    // },
+  };
+
+  if (req.admin && req.admin._id) {
+    matchQuery.createdBy = req.admin._id;
+  }
+
   const result = await Model.aggregate([
     {
-      $match: {
-        removed: false,
-
-        // date: {
-        //   $gte: startDate.toDate(),
-        //   $lte: endDate.toDate(),
-        // },
-      },
+      $match: matchQuery,
     },
     {
       $group: {

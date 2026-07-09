@@ -1,6 +1,7 @@
 import * as actionTypes from './types';
 import * as authService from '@/auth';
 import { request } from '@/request';
+import storePersist from '@/redux/storePersist';
 
 export const login =
   ({ loginData }) =>
@@ -17,8 +18,9 @@ export const login =
         isLoading: false,
         isSuccess: true,
       };
-      window.localStorage.setItem('auth', JSON.stringify(auth_state));
-      window.localStorage.removeItem('isLogout');
+      const remember = data.result.maxAge ? true : false;
+      storePersist.set('auth', auth_state, remember);
+      storePersist.remove('isLogout');
       dispatch({
         type: actionTypes.REQUEST_SUCCESS,
         payload: data.result,
@@ -64,8 +66,9 @@ export const verify =
         isLoading: false,
         isSuccess: true,
       };
-      window.localStorage.setItem('auth', JSON.stringify(auth_state));
-      window.localStorage.removeItem('isLogout');
+      const remember = data.result.maxAge ? true : false;
+      storePersist.set('auth', auth_state, remember);
+      storePersist.remove('isLogout');
       dispatch({
         type: actionTypes.REQUEST_SUCCESS,
         payload: data.result,
@@ -112,8 +115,9 @@ export const resetPassword =
         isLoading: false,
         isSuccess: true,
       };
-      window.localStorage.setItem('auth', JSON.stringify(auth_state));
-      window.localStorage.removeItem('isLogout');
+      const remember = data.result.maxAge ? true : false;
+      storePersist.set('auth', auth_state, remember);
+      storePersist.remove('isLogout');
       dispatch({
         type: actionTypes.REQUEST_SUCCESS,
         payload: data.result,
@@ -129,24 +133,22 @@ export const logout = () => async (dispatch) => {
   dispatch({
     type: actionTypes.LOGOUT_SUCCESS,
   });
-  const result = window.localStorage.getItem('auth');
-  const tmpAuth = JSON.parse(result);
-  const settings = window.localStorage.getItem('settings');
-  const tmpSettings = JSON.parse(settings);
-  window.localStorage.removeItem('auth');
-  window.localStorage.removeItem('settings');
-  window.localStorage.setItem('isLogout', JSON.stringify({ isLogout: true }));
+  const tmpAuth = storePersist.get('auth');
+  const tmpSettings = storePersist.get('settings');
+  storePersist.remove('auth');
+  storePersist.remove('settings');
+  storePersist.set('isLogout', { isLogout: true }, true);
   const data = await authService.logout();
   if (data.success === false) {
     const auth_state = {
-      current: tmpAuth,
+      current: tmpAuth ? tmpAuth.current : {},
       isLoggedIn: true,
       isLoading: false,
       isSuccess: true,
     };
-    window.localStorage.setItem('auth', JSON.stringify(auth_state));
-    window.localStorage.setItem('settings', JSON.stringify(tmpSettings));
-    window.localStorage.removeItem('isLogout');
+    storePersist.set('auth', auth_state, tmpAuth && tmpAuth.current && tmpAuth.current.maxAge ? true : false);
+    storePersist.set('settings', tmpSettings, true);
+    storePersist.remove('isLogout');
     dispatch({
       type: actionTypes.LOGOUT_FAILED,
       payload: data.result,
@@ -166,12 +168,16 @@ export const updateProfile =
         type: actionTypes.REQUEST_SUCCESS,
         payload: data.result,
       });
+      const tmpAuth = storePersist.get('auth') || {};
       const auth_state = {
+        ...tmpAuth,
         current: data.result,
         isLoggedIn: true,
         isLoading: false,
         isSuccess: true,
       };
-      window.localStorage.setItem('auth', JSON.stringify(auth_state));
+      const remember = data.result.maxAge ? true : false;
+      storePersist.set('auth', auth_state, remember);
     }
   };
+

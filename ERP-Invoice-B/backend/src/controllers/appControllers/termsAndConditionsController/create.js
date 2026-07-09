@@ -28,17 +28,15 @@ const create = async (req, res) => {
 
     // If this is set as default, unset other default terms
     if (value.isDefault) {
-      await Model.updateMany(
-        { removed: false, isDefault: true },
-        { isDefault: false }
-      );
+      await Model.updateMany({ removed: false, isDefault: true, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) }, { isDefault: false });
     } else {
       // If there are currently no default active terms, make this default if enabled
       const activeDefaultCount = await Model.countDocuments({
-        removed: false,
-        isDefault: true,
-        enabled: true
-      });
+      removed: false,
+      isDefault: true,
+      enabled: true,
+      ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {})
+    });
       if (activeDefaultCount === 0 && value.enabled !== false) {
         value.isDefault = true;
       }

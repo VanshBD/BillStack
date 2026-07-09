@@ -4,7 +4,7 @@ const Model = mongoose.model('Product');
 
 const listAll = async (req, res) => {
   try {
-    const results = await Model.find({ removed: false })
+    const results = await Model.find({ removed: false, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) })
       .sort({ created: -1 })
       .populate('taxCategory')
       .populate('createdBy')

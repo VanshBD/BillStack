@@ -6,17 +6,20 @@ const getDefault = async (req, res) => {
   try {
     const { type = 'invoice' } = req.query;
     
+    const query = { removed: false };
+    if (req.admin && req.admin._id) {
+      query.createdBy = req.admin._id;
+    }
+
     // Try to find default terms first
     let defaultTerms = await Model.findOne({ 
-      removed: false, 
+      ...query,
       isDefault: true 
     }).populate('createdBy', 'name email');
     
     // If no default terms, get the first available terms
     if (!defaultTerms) {
-      defaultTerms = await Model.findOne({ 
-        removed: false 
-      })
+      defaultTerms = await Model.findOne(query)
       .sort({ created: 1 })
       .populate('createdBy', 'name email');
     }

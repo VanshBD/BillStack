@@ -28,6 +28,6 @@ const categorySchema = new mongoose.Schema({
   },
 });
 
-categorySchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
+categorySchema.index({ name: 1, createdBy: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 module.exports = mongoose.model('Category', categorySchema);

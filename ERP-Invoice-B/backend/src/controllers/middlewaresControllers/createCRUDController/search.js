@@ -19,11 +19,16 @@ const search = async (Model, req, res) => {
   }
   // console.log(fields)
 
-  let results = await Model.find({
+  const query = {
     ...fields,
-  })
+    removed: false,
+  };
 
-    .where('removed', false)
+  if (Model.schema.paths.createdBy && req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
+
+  let results = await Model.find(query)
     .limit(20)
     .exec();
 

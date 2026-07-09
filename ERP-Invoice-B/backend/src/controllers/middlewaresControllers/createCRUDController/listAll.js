@@ -4,23 +4,23 @@ const listAll = async (Model, req, res) => {
 
   //  Query the database for a list of all results
 
-  let result;
-  if (enabled === undefined) {
-    result = await Model.find({
-      removed: false,
-    })
-      .sort({ created: sort })
-      .populate()
-      .exec();
-  } else {
-    result = await Model.find({
-      removed: false,
-      enabled: enabled,
-    })
-      .sort({ created: sort })
-      .populate()
-      .exec();
+  const query = {
+    removed: false,
+  };
+  
+  if (enabled !== undefined) {
+    query.enabled = enabled;
   }
+
+  // If the model has a createdBy field, restrict it to the current admin
+  if (Model.schema.paths.createdBy && req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
+
+  const result = await Model.find(query)
+    .sort({ created: sort })
+    .populate()
+    .exec();
 
   if (result.length > 0) {
     return res.status(200).json({

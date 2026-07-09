@@ -50,10 +50,11 @@ const update = async (req, res) => {
 
       if (lostDefaultStatus) {
         const nextDefault = await Model.findOne({
-          _id: { $ne: id },
-          removed: false,
-          enabled: true
-        }).sort({ created: -1 });
+      _id: { $ne: id },
+      removed: false,
+      enabled: true,
+      ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {})
+    }).sort({ created: -1 });
         if (nextDefault) {
           await Model.updateOne({ _id: nextDefault._id }, { isDefault: true });
         }

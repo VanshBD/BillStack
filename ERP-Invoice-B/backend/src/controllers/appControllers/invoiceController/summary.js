@@ -30,15 +30,21 @@ const summary = async (req, res) => {
 
   const statuses = ['draft', 'pending', 'overdue', 'paid', 'unpaid', 'partially'];
 
+  const matchQuery = {
+    removed: false,
+    // date: {
+    //   $gte: startDate.toDate(),
+    //   $lte: endDate.toDate(),
+    // },
+  };
+
+  if (req.admin && req.admin._id) {
+    matchQuery.createdBy = req.admin._id;
+  }
+
   const response = await Model.aggregate([
     {
-      $match: {
-        removed: false,
-        // date: {
-        //   $gte: startDate.toDate(),
-        //   $lte: endDate.toDate(),
-        // },
-      },
+      $match: matchQuery,
     },
     {
       $facet: {
@@ -163,19 +169,24 @@ const summary = async (req, res) => {
     }
   });
 
+  const unpaidMatchQuery = {
+    removed: false,
+    // date: {
+    //   $gte: startDate.toDate(),
+    //   $lte: endDate.toDate(),
+    // },
+    paymentStatus: {
+      $in: ['unpaid', 'partially'],
+    },
+  };
+
+  if (req.admin && req.admin._id) {
+    unpaidMatchQuery.createdBy = req.admin._id;
+  }
+
   const unpaid = await Model.aggregate([
     {
-      $match: {
-        removed: false,
-
-        // date: {
-        //   $gte: startDate.toDate(),
-        //   $lte: endDate.toDate(),
-        // },
-        paymentStatus: {
-          $in: ['unpaid', 'partially'],
-        },
-      },
+      $match: unpaidMatchQuery,
     },
     {
       $group: {

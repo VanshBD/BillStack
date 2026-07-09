@@ -1,6 +1,8 @@
 import notify from './notifyService';
 import codeMessage from './codeMessage';
 
+import storePersist from '@/redux/storePersist';
+
 const errorHandler = (error) => {
   if (!navigator.onLine) {
     notify.error({
@@ -27,11 +29,11 @@ const errorHandler = (error) => {
 
   // JWT expired → force logout
   if (response.data && response.data.jwtExpired) {
-    const result = window.localStorage.getItem('auth');
-    const jsonFile = window.localStorage.getItem('isLogout');
-    const { isLogout } = (jsonFile && JSON.parse(jsonFile)) || {};
-    window.localStorage.removeItem('auth');
-    window.localStorage.removeItem('isLogout');
+    const result = storePersist.get('auth');
+    const jsonFile = storePersist.get('isLogout');
+    const { isLogout } = (jsonFile) || {};
+    storePersist.remove('auth');
+    storePersist.remove('isLogout');
     if (result || isLogout) {
       window.location.href = '/logout';
     }
@@ -47,8 +49,8 @@ const errorHandler = (error) => {
     });
 
     if (response?.data?.error?.name === 'JsonWebTokenError') {
-      window.localStorage.removeItem('auth');
-      window.localStorage.removeItem('isLogout');
+      storePersist.remove('auth');
+      storePersist.remove('isLogout');
       window.location.href = '/logout';
     } else {
       return response.data;

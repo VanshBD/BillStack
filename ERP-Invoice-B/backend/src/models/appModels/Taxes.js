@@ -26,8 +26,12 @@ const schema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  createdBy: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Admin',
+  },
 });
 
-schema.index({ taxName: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
+schema.index({ taxName: 1, createdBy: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 module.exports = mongoose.model('Taxes', schema);

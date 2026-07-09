@@ -29,8 +29,12 @@ const paymentModeSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  createdBy: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Admin',
+  },
 });
 
-paymentModeSchema.index({ name: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
+paymentModeSchema.index({ name: 1, createdBy: 1 }, { unique: true, collation: { locale: 'en', strength: 2 } });
 
 module.exports = mongoose.model('PaymentMode', paymentModeSchema);

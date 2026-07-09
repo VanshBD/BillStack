@@ -22,6 +22,7 @@ const list = async (req, res) => {
       })
     };
 
+    if (req.admin && req.admin._id) searchQuery.createdBy = req.admin._id;
     const bankAccounts = await Model.find(searchQuery)
       .populate('createdBy', 'name email')
       .sort({ isDefault: -1, created: -1 })

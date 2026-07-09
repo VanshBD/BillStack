@@ -35,6 +35,7 @@ const search = async (req, res) => {
     }
 
     // Execute search
+    if (req.admin && req.admin._id) queryConditions.createdBy = req.admin._id;
     const results = await Model.find(queryConditions)
       .limit(parseInt(limit))
       .sort({ created: -1 })

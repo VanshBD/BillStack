@@ -9,6 +9,10 @@ const summary = async (req, res) => {
     // Build match conditions
     const matchConditions = { removed: false, ...match };
 
+    if (req.admin && req.admin._id) {
+      matchConditions.createdBy = req.admin._id;
+    }
+
     // Default aggregation if no group specified
     if (!group || Object.keys(aggregate).length === 0) {
       aggregate.push(
