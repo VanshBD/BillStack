@@ -90,13 +90,11 @@ export default function UpdateItem({ config, UpdateForm }) {
         );
       }
       if (fieldsValue.items) {
-        let newList = [];
-        fieldsValue.items.map((item) => {
-          const { quantity, price, itemName, description } = item;
-          const total = item.quantity * item.price;
-          newList.push({ total, quantity, price, itemName, description });
-        });
-        dataToUpdate.items = newList;
+        // Preserve ALL item fields including taxCategory, taxRate, taxAmount
+        dataToUpdate.items = fieldsValue.items.map((item) => ({
+          ...item,
+          total: item.quantity * item.price,
+        }));
       }
     }
 
@@ -168,7 +166,7 @@ export default function UpdateItem({ config, UpdateForm }) {
       <Divider dashed />
       <Loading isLoading={isLoading}>
         <Form form={form} layout="vertical" onFinish={onSubmit} onValuesChange={handelValuesChange}>
-          <UpdateForm subTotal={subTotal} current={current} />
+          <UpdateForm subTotal={subTotal} current={current} form={form} />
         </Form>
       </Loading>
     </>

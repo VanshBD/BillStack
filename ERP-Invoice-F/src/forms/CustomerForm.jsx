@@ -1,12 +1,20 @@
-import { Form, Input, Select, Switch, Row, Col, Divider, Typography } from 'antd';
+import { Form, Input, Select, Switch, Row, Col, Divider, Typography, Tooltip } from 'antd';
 import { validatePhoneNumber } from '@/utils/helpers';
 import useLanguage from '@/locale/useLanguage';
 import { indianStates } from '@/utils/indianStates';
 import { countryList } from '@/utils/countryList';
 import { useEffect } from 'react';
-import { EnvironmentOutlined, ShopOutlined, PhoneOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
+import { EnvironmentOutlined, ShopOutlined, PhoneOutlined, MailOutlined, IdcardOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
+
+// Build searchable options for Ant Design Select
+const countryOptions = countryList.map((country) => ({
+  label: (country.icon ? country.icon + ' ' : '') + country.label,
+  value: country.value,
+  // searchable text — plain string used by filterOption
+  search: country.label.toLowerCase(),
+}));
 
 export default function CustomerForm({ isUpdateForm = false }) {
   const translate = useLanguage();
@@ -20,19 +28,38 @@ export default function CustomerForm({ isUpdateForm = false }) {
     return Promise.resolve();
   };
 
+  // When state name is selected → auto-fill state code
   const handleStateChange = (value, option) => {
     if (option) {
-      form.setFieldsValue({ stateCode: option.code });
+      form.setFieldsValue({ stateCode: option['data-code'] });
     } else {
       form.setFieldsValue({ stateCode: null });
     }
   };
 
+  // When state code is selected → auto-fill state name
   const handleStateCodeChange = (value, option) => {
     if (option) {
-      form.setFieldsValue({ state: option.state });
+      form.setFieldsValue({ state: option['data-state'] });
     } else {
       form.setFieldsValue({ state: null });
+    }
+  };
+
+  // When GST number is entered → auto-extract state code from first 2 digits
+  const handleGstChange = (e) => {
+    const gstValue = e.target.value || '';
+    if (gstValue.length >= 2) {
+      const extractedCode = gstValue.substring(0, 2);
+      if (/^\d{2}$/.test(extractedCode)) {
+        const matchedState = indianStates.find(s => s.code === extractedCode);
+        if (matchedState) {
+          form.setFieldsValue({
+            stateCode: matchedState.code,
+            state: matchedState.state,
+          });
+        }
+      }
     }
   };
 
@@ -100,12 +127,23 @@ export default function CustomerForm({ isUpdateForm = false }) {
         <Col span={24}>
           <Form.Item
             name="gstNumber"
-            label="GST Number"
-            rules={[
-              { validator: validateEmptyString },
-            ]}
+            label={
+              <span>
+                GST Number{' '}
+                <Tooltip title="State code is auto-detected from the first 2 digits of your GST number">
+                  <InfoCircleOutlined style={{ color: '#1677ff', cursor: 'help' }} />
+                </Tooltip>
+              </span>
+            }
+            rules={[{ validator: validateEmptyString }]}
           >
-            <Input prefix={<IdcardOutlined />} placeholder="Enter GST Number" />
+            <Input 
+              prefix={<IdcardOutlined />} 
+              placeholder="e.g. 24ABCDE1234F1Z5"
+              onChange={handleGstChange}
+              maxLength={15}
+              style={{ textTransform: 'uppercase' }}
+            />
           </Form.Item>
         </Col>
       </Row>
@@ -125,24 +163,22 @@ export default function CustomerForm({ isUpdateForm = false }) {
           >
             <Select
               showSearch
-              optionFilterProp="children"
+              placeholder="Search country..."
+              optionFilterProp="search"
+              options={countryOptions}
+              optionRender={(option) => (
+                <span>{option.data.label}</span>
+              )}
               filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                (option?.search ?? '').includes(input.toLowerCase())
               }
-            >
-              {countryList.map((country) => (
-                <Select.Option key={country.value} value={country.value} label={translate(country.label)}>
-                  {country?.icon && country?.icon + ' '}
-                  {translate(country.label)}
-                </Select.Option>
-              ))}
-            </Select>
+            />
           </Form.Item>
         </Col>
       </Row>
 
       <Row gutter={16}>
-        <Col span={12}>
+        <Col span={16}>
           <Form.Item
             name="state"
             label="State"
@@ -152,39 +188,38 @@ export default function CustomerForm({ isUpdateForm = false }) {
               showSearch
               allowClear
               placeholder="Select State"
-              optionFilterProp="children"
-              onChange={handleStateChange}
               filterOption={(input, option) =>
-                (option?.state ?? '').toLowerCase().includes(input.toLowerCase())
+                (option?.['data-state'] ?? '').toLowerCase().includes(input.toLowerCase())
               }
+              onChange={handleStateChange}
             >
-              {indianStates.map((state) => (
-                <Select.Option key={state.value} value={state.state} state={state.state} code={state.code}>
-                  {state.state}
+              {indianStates.map((s) => (
+                <Select.Option key={s.code} value={s.state} data-state={s.state} data-code={s.code}>
+                  <span style={{ marginRight: 8, color: '#94a3b8', fontSize: '11px', fontFamily: 'monospace' }}>{s.code}</span>
+                  {s.state}
                 </Select.Option>
               ))}
             </Select>
           </Form.Item>
         </Col>
-        <Col span={12}>
+        <Col span={8}>
           <Form.Item
             name="stateCode"
             label="State Code"
-            rules={[{ required: true, message: 'State Code is required' }]}
+            rules={[{ required: true, message: 'Required' }]}
           >
             <Select
               showSearch
               allowClear
               placeholder="Code"
-              optionFilterProp="children"
-              onChange={handleStateCodeChange}
               filterOption={(input, option) =>
-                (option?.code ?? '').toLowerCase().includes(input.toLowerCase())
+                (option?.['data-code'] ?? '').toLowerCase().includes(input.toLowerCase())
               }
+              onChange={handleStateCodeChange}
             >
-              {indianStates.map((state) => (
-                <Select.Option key={state.value} value={state.code} state={state.state} code={state.code}>
-                  {state.code}
+              {indianStates.map((s) => (
+                <Select.Option key={s.code} value={s.code} data-state={s.state} data-code={s.code}>
+                  {s.code}
                 </Select.Option>
               ))}
             </Select>

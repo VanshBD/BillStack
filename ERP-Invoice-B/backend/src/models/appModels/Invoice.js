@@ -15,6 +15,11 @@ const invoiceSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  // Human-readable invoice number: e.g. "87-2025/26"
+  invoiceDisplayNumber: {
+    type: String,
+    default: '',
+  },
   content: String,
   recurring: {
     type: String,
@@ -70,11 +75,20 @@ const invoiceSchema = new mongoose.Schema({
         type: Number,
         required: true,
       },
+      taxCategory: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Taxes',
+        autopopulate: true,
+      },
+      taxRate: {
+        type: Number,
+        default: 0,
+      },
+      taxAmount: {
+        type: Number,
+        default: 0,
+      },
       // discount: {
-      //   type: Number,
-      //   default: 0,
-      // },
-      // taxRate: {
       //   type: Number,
       //   default: 0,
       // },
@@ -96,6 +110,11 @@ const invoiceSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  taxType: {
+    type: String,
+    enum: ['igst', 'cgst_sgst'],
+    default: 'cgst_sgst',
+  },
   subTotal: {
     type: Number,
     default: 0,
@@ -104,6 +123,22 @@ const invoiceSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  taxBreakdown: [
+    {
+      taxCategoryId: { type: mongoose.Schema.ObjectId },
+      taxCategoryName: { type: String, default: '' },
+      taxRate: { type: Number, default: 0 },
+      taxType: { type: String, enum: ['igst', 'cgst_sgst'], default: 'cgst_sgst' },
+      taxableAmount: { type: Number, default: 0 },
+      cgstRate: { type: Number, default: 0 },
+      sgstRate: { type: Number, default: 0 },
+      igstRate: { type: Number, default: 0 },
+      cgstAmount: { type: Number, default: 0 },
+      sgstAmount: { type: Number, default: 0 },
+      igstAmount: { type: Number, default: 0 },
+      totalTaxAmount: { type: Number, default: 0 },
+    }
+  ],
   total: {
     type: Number,
     default: 0,

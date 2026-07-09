@@ -24,7 +24,7 @@ module.exports = downloadPdf = async (req, res, { directory, id }) => {
       });
     }
 
-    const fileId = modelName.toLowerCase() + '-' + result._id + '.pdf';
+    const fileId = result.pdf || modelName.toLowerCase() + '-' + result._id + '.pdf';
     const folderPath = modelName.toLowerCase();
     const targetLocation = `src/public/download/${folderPath}/${fileId}`;
 

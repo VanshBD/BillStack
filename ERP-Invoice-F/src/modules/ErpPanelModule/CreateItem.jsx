@@ -87,16 +87,15 @@ export default function CreateItem({ config, CreateForm }) {
   }, [isSuccess]);
 
   const onSubmit = (fieldsValue) => {
-    console.log('🚀 ~ onSubmit ~ fieldsValue:', fieldsValue);
     if (fieldsValue) {
       if (fieldsValue.items) {
-        let newList = [...fieldsValue.items];
-        newList.map((item) => {
-          item.total = calculate.multiply(item.quantity, item.price);
-        });
+        // Preserve ALL item fields including taxCategory, taxRate, taxAmount
         fieldsValue = {
           ...fieldsValue,
-          items: newList,
+          items: fieldsValue.items.map((item) => ({
+            ...item,
+            total: calculate.multiply(item.quantity, item.price),
+          })),
         };
       }
     }

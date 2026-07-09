@@ -58,22 +58,36 @@ function resolveParty(model) {
   const src = model.client || model.lead || {};
   return {
     name: src.name || '',
+    company: src.company || '',
     address: src.address || '',
     phone: src.phone || '',
     email: src.email || '',
     gst: src.gst || src.taxID || '',
+    state: src.state || '',
+    stateCode: src.stateCode || '',
   };
 }
 
 // Normalize calculation fields — supports IGST and CGST+SGST
 function resolveCalculation(model) {
   if (model.calculation) return model.calculation;
+  
+  // Normalize taxType: backend stores 'igst' or 'cgst_sgst', PDF expects 'SINGLE' or 'CGST_SGST'
+  let taxType = 'SINGLE'; // Default to IGST (single tax)
+  if (model.taxType) {
+    taxType = model.taxType === 'cgst_sgst' ? 'CGST_SGST' : 'SINGLE';
+  } else if (model.taxType === undefined && model.taxTotal) {
+    // Legacy: if taxType not set, default to SINGLE for backward compatibility
+    taxType = 'SINGLE';
+  }
+  
   return {
     subTotal: model.subTotal || 0,
-    taxType: model.taxType || 'SINGLE', // 'SINGLE' | 'CGST_SGST'
+    taxType: taxType,
     taxRate: model.taxRate || 0,
     taxAmount: model.taxTotal || 0,
     total: model.total || 0,
+    taxBreakdown: model.taxBreakdown || [],
   };
 }
 
@@ -162,6 +176,7 @@ exports.generatePdf = (
         party: resolveParty(result),
         calculation: resolveCalculation(result),
         items: enrichedItems,
+        taxBreakdown: rawModel.taxBreakdown || [],
       });
 
       // Indian number to words function

@@ -1,4 +1,14 @@
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, App } from 'antd';
+import { useEffect } from 'react';
+import { initNotifyService } from '@/request/notifyService';
+
+function NotifyServiceInitializer() {
+  const { notification } = App.useApp();
+  useEffect(() => {
+    initNotifyService(notification);
+  }, [notification]);
+  return null;
+}
 
 export default function Localization({ children }) {
   return (
@@ -11,7 +21,10 @@ export default function Localization({ children }) {
         },
       }}
     >
-      {children}
+      <App>
+        <NotifyServiceInitializer />
+        {children}
+      </App>
     </ConfigProvider>
   );
 }

@@ -7,7 +7,7 @@ block content
   - var taxRate   = calc.taxRate   !== undefined ? calc.taxRate   : (model.taxRate   || 0)
   - var taxAmount = calc.taxAmount !== undefined ? calc.taxAmount : (model.taxTotal  || 0)
   - var total     = calc.total     !== undefined ? calc.total     : (model.total     || 0)
-  - var isCGST    = (model.taxType === 'CGST_SGST' || (calc.taxType === 'CGST_SGST'))
+  - var isCGST    = (model.taxType === 'CGST_SGST' || model.taxType === 'cgst_sgst' || (calc.taxType === 'CGST_SGST'))
   - var showShip  = (settings.pdf_show_ship_to  !== false && settings.pdf_show_ship_to  !== 'false')
   - var showSig   = (settings.pdf_show_authorized_signatory !== false && settings.pdf_show_authorized_signatory !== 'false')
   - var bank      = (model.selectedBankDetails && model.selectedBankDetails.bankName) ? model.selectedBankDetails : null
@@ -65,7 +65,7 @@ block content
             .meta-box
               .meta-row
                 span.meta-label #{translate('Number')} :
-                span(style="font-weight:700;") &nbsp;##{model.number}/#{model.year || ""}
+                span(style="font-weight:700;") &nbsp;#{model.invoiceDisplayNumber || ('#' + model.number + (model.year ? '/' + model.year : ''))}
               .meta-row
                 span.meta-label #{translate('Date')} :
                 span &nbsp;#{moment(model.date).format(dateFormat)}
@@ -156,31 +156,31 @@ block content
     table.items-table(cellspacing="0" cellpadding="0")
       if isCGST
         colgroup
-          col(style="width:4%")
-          col(style="width:20%")
+          col(style="width:3%")
+          col(style="width:18%")
           col(style="width:7%")
-          col(style="width:5%")
-          col(style="width:5%")
-          col(style="width:9%")
-          col(style="width:9%")
-          col(style="width:9%")
           col(style="width:4%")
-          col(style="width:6%")
           col(style="width:4%")
-          col(style="width:6%")
-          col(style="width:12%")
+          col(style="width:10%")
+          col(style="width:10%")
+          col(style="width:10%")
+          col(style="width:5%")
+          col(style="width:8%")
+          col(style="width:5%")
+          col(style="width:8%")
+          col(style="width:8%")
       else
         colgroup
+          col(style="width:3%")
+          col(style="width:22%")
+          col(style="width:7%")
           col(style="width:4%")
-          col(style="width:26%")
-          col(style="width:8%")
+          col(style="width:4%")
+          col(style="width:11%")
+          col(style="width:11%")
+          col(style="width:11%")
           col(style="width:5%")
-          col(style="width:5%")
-          col(style="width:9%")
-          col(style="width:9%")
-          col(style="width:9%")
-          col(style="width:5%")
-          col(style="width:8%")
+          col(style="width:10%")
           col(style="width:12%")
 
       thead
@@ -268,9 +268,9 @@ block content
           td.text-right #{moneyFormatter({amount: subTotal})}
           if isCGST
             td &nbsp;
-            td.text-right #{moneyFormatter({amount: halfTax})}
+            td.text-right #{moneyFormatter({amount: parseFloat((taxAmount / 2).toFixed(2))})}
             td &nbsp;
-            td.text-right #{moneyFormatter({amount: halfTax})}
+            td.text-right #{moneyFormatter({amount: parseFloat((taxAmount / 2).toFixed(2))})}
           else
             td &nbsp;
             td.text-right #{moneyFormatter({amount: taxAmount})}
@@ -329,20 +329,40 @@ block content
                 td(style="color:#475569;") Amount Before Tax
                 td.text-right #{moneyFormatter({amount: subTotal})}
               if docConfig.showTax
-                if isCGST
+                - var taxBreakdownList = model.taxBreakdown && model.taxBreakdown.length > 0 ? model.taxBreakdown : null
+                if taxBreakdownList
+                  //- Per-category tax breakdown
+                  each bd in taxBreakdownList
+                    if isCGST
+                      tr
+                        td(style="color:#475569;") Add: CGST #{bd.taxRate / 2}% (#{bd.taxCategoryName})
+                        td.text-right #{moneyFormatter({amount: bd.cgstAmount})}
+                      tr
+                        td(style="color:#475569;") Add: SGST #{bd.taxRate / 2}% (#{bd.taxCategoryName})
+                        td.text-right #{moneyFormatter({amount: bd.sgstAmount})}
+                    else
+                      tr
+                        td(style="color:#475569;") Add: IGST #{bd.taxRate}% (#{bd.taxCategoryName})
+                        td.text-right #{moneyFormatter({amount: bd.igstAmount})}
                   tr
-                    td(style="color:#475569;") Add: CGST (#{(taxRate/2)}%)
-                    td.text-right #{moneyFormatter({amount: halfTax})}
-                  tr
-                    td(style="color:#475569;") Add: SGST (#{(taxRate/2)}%)
-                    td.text-right #{moneyFormatter({amount: halfTax})}
+                    td.subtotal-label-row(style="font-weight:700; color:#0f172a;") Total GST Amount
+                    td.text-right.subtotal-label-row(style="font-weight:700;") #{moneyFormatter({amount: taxAmount})}
                 else
+                  //- Legacy fallback (single rate)
+                  if isCGST
+                    tr
+                      td(style="color:#475569;") Add: CGST (#{(taxRate/2)}%)
+                      td.text-right #{moneyFormatter({amount: halfTax})}
+                    tr
+                      td(style="color:#475569;") Add: SGST (#{(taxRate/2)}%)
+                      td.text-right #{moneyFormatter({amount: halfTax})}
+                  else
+                    tr
+                      td(style="color:#475569;") Add: IGST (#{taxRate}%)
+                      td.text-right #{moneyFormatter({amount: taxAmount})}
                   tr
-                    td(style="color:#475569;") Add: IGST (#{taxRate}%)
-                    td.text-right #{moneyFormatter({amount: taxAmount})}
-                tr
-                  td.subtotal-label-row(style="font-weight:700; color:#0f172a;") Total GST Amount
-                  td.text-right.subtotal-label-row(style="font-weight:700;") #{moneyFormatter({amount: taxAmount})}
+                    td.subtotal-label-row(style="font-weight:700; color:#0f172a;") Total GST Amount
+                    td.text-right.subtotal-label-row(style="font-weight:700;") #{moneyFormatter({amount: taxAmount})}
               tr.grand-total-row
                 td Grand Total
                 td.text-right #{moneyFormatter({amount: total})}

@@ -26,39 +26,43 @@ import { useNavigate } from 'react-router-dom';
 
 const Item = ({ item, currentErp }) => {
   const { moneyFormatter } = useMoney();
+  const taxRate = item.taxRate || 0;
+  const taxAmount = item.taxAmount || (item.total * taxRate / 100);
+  const taxType = currentErp.taxType || 'cgst_sgst';
+
   return (
     <Row gutter={[12, 0]} key={item._id}>
-      <Col className="gutter-row" span={11}>
+      <Col className="gutter-row" span={9}>
         <p style={{ marginBottom: 5 }}>
           <strong>{item.itemName}</strong>
         </p>
-        <p>{item.description}</p>
+        <p style={{ color: '#64748b', fontSize: '12px' }}>{item.description}</p>
       </Col>
-      <Col className="gutter-row" span={4}>
-        <p
-          style={{
-            textAlign: 'right',
-          }}
-        >
+      <Col className="gutter-row" span={3}>
+        <p style={{ textAlign: 'right' }}>
           {moneyFormatter({ amount: item.price, currency_code: currentErp.currency })}
         </p>
       </Col>
-      <Col className="gutter-row" span={4}>
-        <p
-          style={{
-            textAlign: 'right',
-          }}
-        >
-          {item.quantity}
-        </p>
+      <Col className="gutter-row" span={2}>
+        <p style={{ textAlign: 'right' }}>{item.quantity}</p>
       </Col>
       <Col className="gutter-row" span={5}>
-        <p
-          style={{
-            textAlign: 'right',
-            fontWeight: '700',
-          }}
-        >
+        {taxRate > 0 ? (
+          taxType === 'igst' ? (
+            <p style={{ textAlign: 'right', fontSize: '12px', color: '#475569' }}>
+              IGST {taxRate}%: {moneyFormatter({ amount: taxAmount, currency_code: currentErp.currency })}
+            </p>
+          ) : (
+            <p style={{ textAlign: 'right', fontSize: '12px', color: '#475569' }}>
+              CGST {taxRate / 2}% + SGST {taxRate / 2}%: {moneyFormatter({ amount: taxAmount, currency_code: currentErp.currency })}
+            </p>
+          )
+        ) : (
+          <p style={{ textAlign: 'right', fontSize: '12px', color: '#94a3b8' }}>—</p>
+        )}
+      </Col>
+      <Col className="gutter-row" span={5}>
+        <p style={{ textAlign: 'right', fontWeight: '700' }}>
           {moneyFormatter({ amount: item.total, currency_code: currentErp.currency })}
         </p>
       </Col>
@@ -129,7 +133,7 @@ export default function ReadItem({ config, selectedItem }) {
         onBack={() => {
           navigate(`/${entity.toLowerCase()}`);
         }}
-        title={`${ENTITY_NAME} # ${currentErp.number}/${currentErp.year || ''}`}
+        title={`${ENTITY_NAME} # ${currentErp.invoiceDisplayNumber || (currentErp.number + '/' + (currentErp.year || ''))}`}
         ghost={false}
         tags={[
           <span key="status">{currentErp.status && translate(currentErp.status)}</span>,
@@ -242,37 +246,20 @@ export default function ReadItem({ config, selectedItem }) {
       </Descriptions>
       <Divider />
       <Row gutter={[12, 0]}>
-        <Col className="gutter-row" span={11}>
-          <p>
-            <strong>{translate('Product')}</strong>
-          </p>
+        <Col className="gutter-row" span={9}>
+          <p><strong>{translate('Product')}</strong></p>
         </Col>
-        <Col className="gutter-row" span={4}>
-          <p
-            style={{
-              textAlign: 'right',
-            }}
-          >
-            <strong>{translate('Price')}</strong>
-          </p>
+        <Col className="gutter-row" span={3}>
+          <p style={{ textAlign: 'right' }}><strong>{translate('Price')}</strong></p>
         </Col>
-        <Col className="gutter-row" span={4}>
-          <p
-            style={{
-              textAlign: 'right',
-            }}
-          >
-            <strong>{translate('Quantity')}</strong>
-          </p>
+        <Col className="gutter-row" span={2}>
+          <p style={{ textAlign: 'right' }}><strong>{translate('Qty')}</strong></p>
         </Col>
         <Col className="gutter-row" span={5}>
-          <p
-            style={{
-              textAlign: 'right',
-            }}
-          >
-            <strong>{translate('Total')}</strong>
-          </p>
+          <p style={{ textAlign: 'right' }}><strong>{translate('Tax')}</strong></p>
+        </Col>
+        <Col className="gutter-row" span={5}>
+          <p style={{ textAlign: 'right' }}><strong>{translate('Total')}</strong></p>
         </Col>
         <Divider />
       </Row>
@@ -281,37 +268,90 @@ export default function ReadItem({ config, selectedItem }) {
       ))}
       <div
         style={{
-          width: '300px',
+          width: '360px',
           float: 'right',
           textAlign: 'right',
           fontWeight: '700',
         }}
       >
         <Row gutter={[12, -5]}>
+          {/* Sub Total */}
           <Col className="gutter-row" span={12}>
             <p>{translate('Sub Total')} :</p>
           </Col>
+          <Col className="gutter-row" span={12}>
+            <p>{moneyFormatter({ amount: currentErp.subTotal, currency_code: currentErp.currency })}</p>
+          </Col>
 
+          {/* Tax breakdown — per category */}
+          {currentErp.taxBreakdown && currentErp.taxBreakdown.length > 0 ? (
+            currentErp.taxBreakdown.map((bd, idx) =>
+              currentErp.taxType === 'igst' ? (
+                <Col key={idx} span={24}>
+                  <Row gutter={[12, -5]}>
+                    <Col span={12}>
+                      <p style={{ fontWeight: 400, color: '#475569', fontSize: '13px' }}>
+                        IGST {bd.taxRate}% ({bd.taxCategoryName}) :
+                      </p>
+                    </Col>
+                    <Col span={12}>
+                      <p style={{ fontWeight: 400, color: '#475569', fontSize: '13px' }}>
+                        {moneyFormatter({ amount: bd.igstAmount, currency_code: currentErp.currency })}
+                      </p>
+                    </Col>
+                  </Row>
+                </Col>
+              ) : (
+                <Col key={idx} span={24}>
+                  <Row gutter={[12, -5]}>
+                    <Col span={12}>
+                      <p style={{ fontWeight: 400, color: '#475569', fontSize: '13px' }}>
+                        CGST {bd.taxRate / 2}% ({bd.taxCategoryName}) :
+                      </p>
+                    </Col>
+                    <Col span={12}>
+                      <p style={{ fontWeight: 400, color: '#475569', fontSize: '13px' }}>
+                        {moneyFormatter({ amount: bd.cgstAmount, currency_code: currentErp.currency })}
+                      </p>
+                    </Col>
+                    <Col span={12}>
+                      <p style={{ fontWeight: 400, color: '#475569', fontSize: '13px' }}>
+                        SGST {bd.taxRate / 2}% ({bd.taxCategoryName}) :
+                      </p>
+                    </Col>
+                    <Col span={12}>
+                      <p style={{ fontWeight: 400, color: '#475569', fontSize: '13px' }}>
+                        {moneyFormatter({ amount: bd.sgstAmount, currency_code: currentErp.currency })}
+                      </p>
+                    </Col>
+                  </Row>
+                </Col>
+              )
+            )
+          ) : (
+            /* Legacy fallback — old invoices without taxBreakdown */
+            <>
+              <Col className="gutter-row" span={12}>
+                <p style={{ fontWeight: 400, color: '#475569' }}>
+                  {translate('Tax Total')} ({currentErp.taxRate || 0}%) :
+                </p>
+              </Col>
+              <Col className="gutter-row" span={12}>
+                <p style={{ fontWeight: 400, color: '#475569' }}>
+                  {moneyFormatter({ amount: currentErp.taxTotal, currency_code: currentErp.currency })}
+                </p>
+              </Col>
+            </>
+          )}
+
+          {/* Grand Total */}
           <Col className="gutter-row" span={12}>
-            <p>
-              {moneyFormatter({ amount: currentErp.subTotal, currency_code: currentErp.currency })}
+            <p style={{ borderTop: '1px solid #e2e8f0', paddingTop: '6px', marginTop: '4px' }}>
+              {translate('Total')} :
             </p>
           </Col>
           <Col className="gutter-row" span={12}>
-            <p>
-              {translate('Tax Total')} ({currentErp.taxRate} %) :
-            </p>
-          </Col>
-          <Col className="gutter-row" span={12}>
-            <p>
-              {moneyFormatter({ amount: currentErp.taxTotal, currency_code: currentErp.currency })}
-            </p>
-          </Col>
-          <Col className="gutter-row" span={12}>
-            <p>{translate('Total')} :</p>
-          </Col>
-          <Col className="gutter-row" span={12}>
-            <p>
+            <p style={{ borderTop: '1px solid #e2e8f0', paddingTop: '6px', marginTop: '4px', color: '#2563eb' }}>
               {moneyFormatter({ amount: currentErp.total, currency_code: currentErp.currency })}
             </p>
           </Col>

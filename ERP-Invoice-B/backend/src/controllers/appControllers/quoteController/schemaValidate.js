@@ -9,6 +9,7 @@ module.exports = Joi.object({
   expiredDate: Joi.date().greater(Joi.ref('date')).allow(null, '').optional(),
   date: Joi.date().required(),
   companyGstNumber: Joi.string().allow('').optional(),
+  taxType: Joi.string().valid('igst', 'cgst_sgst').default('cgst_sgst').optional(),
   termsAndConditions: Joi.string().allow('').optional(),
   selectedTermsId: Joi.string().allow('').optional(),
   selectedBankAccountId: Joi.string().allow('').optional(),
@@ -27,7 +28,10 @@ module.exports = Joi.object({
       quantity: Joi.number().required(),
       price: Joi.number().required(),
       total: Joi.number().required(),
+      taxCategory: Joi.string().allow('', null).optional(),
+      taxRate: Joi.number().min(0).max(100).default(0).optional(),
+      taxAmount: Joi.number().default(0).optional(),
     }).required()
   ).required(),
-  taxRate: Joi.number().min(0).max(100).required(),
+  taxRate: Joi.number().min(0).max(100).default(0).optional(),
 });

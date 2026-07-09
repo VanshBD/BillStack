@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import dayjs from 'dayjs';
-import { Form, Input, InputNumber, Button, Select, Divider, Row, Col, Modal, Radio, Tag, Typography } from 'antd';
+import { Form, Input, InputNumber, Button, Select, Divider, Row, Col, Modal, Radio, Tag, Typography, Tooltip } from 'antd';
 const { Text, Title } = Typography;
 
 import { 
@@ -8,7 +8,12 @@ import {
   ShopOutlined, 
   FileTextOutlined, 
   BankOutlined,
-  UserOutlined 
+  UserOutlined,
+  EnvironmentOutlined,
+  PhoneOutlined,
+  MailOutlined,
+  IdcardOutlined,
+  InfoCircleOutlined
 } from '@ant-design/icons';
 
 import { DatePicker } from 'antd';
@@ -26,9 +31,18 @@ import { useSelector, useDispatch } from 'react-redux';
 import SelectAsync from '@/components/SelectAsync';
 import { request } from '@/request';
 import { countryList } from '@/utils/countryList';
+import { indianStates } from '@/utils/indianStates';
 import { list as listBankAccounts } from '@/redux/bankAccount/bankAccountSlice';
 import { list as listTerms } from '@/redux/terms/termsSlice';
 import { numberToWordsIndian } from '@/utils/numberToWords';
+import { getCurrentFYLabel, formatDisplayNumber } from '@/utils/financialYear';
+
+// Pre-built options list for country Select
+const countryOptions = countryList.map((c) => ({
+  label: (c.icon ? c.icon + ' ' : '') + c.label,
+  value: c.value,
+  search: c.label.toLowerCase(),
+}));
 
 export default function QuoteForm({ subTotal = 0, current = null, form }) {
   const { last_quote_number } = useSelector(selectFinanceSettings);
@@ -52,6 +66,8 @@ function LoadQuoteForm({ subTotal = 0, current = null, form }) {
   const [taxRate, setTaxRate] = useState(0);
   const [taxTotal, setTaxTotal] = useState(0);
   const [taxType, setTaxType] = useState('cgst_sgst'); // 'igst' or 'cgst_sgst'
+  const [taxOptions, setTaxOptions] = useState([]);
+  const [taxBreakdown, setTaxBreakdown] = useState([]);
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
   const [clientValue, setClientValue] = useState(null);
   const [clientDetails, setClientDetails] = useState(null);
@@ -69,6 +85,66 @@ function LoadQuoteForm({ subTotal = 0, current = null, form }) {
     dispatch(listTerms());
   }, [dispatch]);
 
+  // Load tax options
+  useEffect(() => {
+    const loadTaxes = async () => {
+      try {
+        const res = await request.listAll({ entity: 'taxes' });
+        if (res && res.success && res.result) {
+          setTaxOptions(res.result.filter(t => t.enabled !== false));
+        }
+      } catch(e) {
+        console.error('Failed to load taxes:', e);
+      }
+    };
+    loadTaxes();
+  }, []);
+
+  // Recalculate totals from items
+  const recalcTotals = useCallback(() => {
+    if (!form) return;
+    const items = form.getFieldValue('items') || [];
+    let newSubTotal = 0;
+    let newTaxTotal = 0;
+    const breakdownMap = new Map();
+
+    items.forEach(item => {
+      if (!item) return;
+      const qty = item.quantity || 0;
+      const price = item.price || 0;
+      const txRate = item.taxRate || 0;
+      const lineTotal = qty * price;
+      newSubTotal += lineTotal;
+      const lineTax = lineTotal * (txRate / 100);
+      newTaxTotal += lineTax;
+
+      if (txRate > 0) {
+        const key = `${item.taxCategory || 'none'}_${txRate}`;
+        if (!breakdownMap.has(key)) {
+          const taxObj = taxOptions.find(t => t._id === item.taxCategory);
+          breakdownMap.set(key, {
+            taxCategoryName: taxObj ? taxObj.taxName : `Tax ${txRate}%`,
+            taxRate: txRate,
+            taxableAmount: 0,
+            taxAmount: 0,
+          });
+        }
+        const bd = breakdownMap.get(key);
+        bd.taxableAmount += lineTotal;
+        bd.taxAmount += lineTax;
+      }
+    });
+
+    setTaxTotal(newTaxTotal);
+    setTotal(newSubTotal + newTaxTotal);
+    setTaxBreakdown(Array.from(breakdownMap.values()));
+  }, [form, taxOptions]);
+
+  // Trigger recalculation when subTotal (from parent) or taxOptions change
+  useEffect(() => {
+    recalcTotals();
+  }, [subTotal, taxOptions, recalcTotals]);
+
   // Handle Tax Type Detection (IGST vs CGST/SGST)
   const isInterState = useMemo(() => {
     if (!clientDetails || !companySettings) return false;
@@ -79,29 +155,31 @@ function LoadQuoteForm({ subTotal = 0, current = null, form }) {
 
   // Sync taxType automatically on client state code detection
   useEffect(() => {
+    if (!form) return;
     setTaxType(isInterState ? 'igst' : 'cgst_sgst');
-  }, [isInterState]);
+    form.setFieldsValue({ taxType: isInterState ? 'igst' : 'cgst_sgst' });
+  }, [isInterState, form]);
 
   // Set default bank if not set
   useEffect(() => {
-    if (bankAccounts && bankAccounts.length > 0) {
-      const selectedId = form.getFieldValue('selectedBankAccountId');
-      if (selectedId) {
-        const bank = bankAccounts.find((b) => b._id === selectedId);
-        setSelectedBankDetails(bank || null);
-      } else {
-        const defaultBank = bankAccounts.find(a => a.enabled) || bankAccounts[0];
-        if (defaultBank) {
-          form.setFieldsValue({ selectedBankAccountId: defaultBank._id });
-          setSelectedBankDetails(defaultBank);
-        }
+    if (!form || !bankAccounts || bankAccounts.length === 0) return;
+    const selectedId = form.getFieldValue('selectedBankAccountId');
+    if (selectedId) {
+      const bank = bankAccounts.find((b) => b._id === selectedId);
+      setSelectedBankDetails(bank || null);
+    } else {
+      const defaultBank = bankAccounts.find(a => a.enabled) || bankAccounts[0];
+      if (defaultBank) {
+        form.setFieldsValue({ selectedBankAccountId: defaultBank._id });
+        setSelectedBankDetails(defaultBank);
       }
     }
   }, [bankAccounts, form]);
 
   // Set default terms if not set
   useEffect(() => {
-    if (termsList && termsList.length > 0 && !form.getFieldValue('selectedTermsId')) {
+    if (!form || !termsList || termsList.length === 0) return;
+    if (!form.getFieldValue('selectedTermsId')) {
       const defaultTerm = termsList.find(t => t.isDefault && t.enabled !== false) || termsList.find(t => t.enabled !== false) || termsList[0];
       if (defaultTerm) {
         form.setFieldsValue({ 
@@ -111,27 +189,6 @@ function LoadQuoteForm({ subTotal = 0, current = null, form }) {
       }
     }
   }, [termsList, form]);
-
-  // Set default tax if not set
-  useEffect(() => {
-    if (!current) {
-      const fetchDefaultTax = async () => {
-        try {
-          const response = await request.list({ entity: 'taxes' });
-          if (response && response.success && response.result) {
-            const defaultTax = response.result.find(t => t.isDefault && t.enabled);
-            if (defaultTax && !form.getFieldValue('taxRate')) {
-              form.setFieldsValue({ taxRate: defaultTax.taxValue });
-              setTaxRate(defaultTax.taxValue / 100);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to fetch default tax:', error);
-        }
-      };
-      fetchDefaultTax();
-    }
-  }, [current, form]);
 
   const handelTaxChange = (value) => {
     setTaxRate(value / 100);
@@ -177,62 +234,77 @@ function LoadQuoteForm({ subTotal = 0, current = null, form }) {
     try {
       const values = await customerForm.validateFields();
       setIsCustomerSubmitting(true);
-      const created = await request.create({ entity: 'client', jsonData: values });
+      const response = await request.create({ entity: 'client', jsonData: values });
       setIsCustomerSubmitting(false);
-      if (created) {
-        setClientValue(created);
-        setClientDetails(created);
+      
+      if (response && response.success && response.result) {
+        const createdClient = response.result;
+        
+        // Set the client value to the ID (what AutoCompleteAsync expects)
+        setClientValue(createdClient._id);
+        
+        // Set the full client details for display
+        setClientDetails(createdClient);
+        
+        // Update the form field
+        form.setFieldsValue({ client: createdClient._id });
+        
+        // Trigger onChange to sync AutoCompleteAsync component
+        onClientChange(createdClient._id, createdClient);
+        
+        // Close modal and reset
         setIsCustomerModalVisible(false);
         customerForm.resetFields();
       }
     } catch (error) {
+      console.error('Error creating customer:', error);
       setIsCustomerSubmitting(false);
     }
   };
 
   useEffect(() => {
-    if (current) {
-      const { taxRate: currentTaxRate = 0, year, number, client } = current;
-      setTaxRate(currentTaxRate / 100);
-      setCurrentYear(year);
-      setLastNumber(number);
-      if (client) setClientDetails(client);
+    if (!current || !form) return;
+    const { taxRate: currentTaxRate = 0, taxType: currentTaxType, year, number, client } = current;
+    setTaxRate(currentTaxRate / 100);
+    setCurrentYear(year);
+    setLastNumber(number);
+    if (currentTaxType) {
+      setTaxType(currentTaxType);
+      form.setFieldsValue({ taxType: currentTaxType });
     }
-  }, [current]);
+    if (client) setClientDetails(client);
+    // Recalc on load from current
+    setTimeout(() => recalcTotals(), 100);
+  }, [current, form]);
 
   // Pre-populate bank and terms on edit
   useEffect(() => {
-    if (current && bankAccounts && bankAccounts.length > 0) {
-      const { selectedBankDetails } = current;
-      if (selectedBankDetails && selectedBankDetails.bankAccount) {
-        const matchingBank = bankAccounts.find(
-          (a) => a.accountNumber === selectedBankDetails.bankAccount
-        );
-        if (matchingBank) {
-          form.setFieldsValue({ selectedBankAccountId: matchingBank._id });
-          setSelectedBankDetails(matchingBank);
-        }
+    if (!current || !form || !bankAccounts || bankAccounts.length === 0) return;
+    const { selectedBankDetails } = current;
+    if (selectedBankDetails && selectedBankDetails.bankAccount) {
+      const matchingBank = bankAccounts.find(
+        (a) => a.accountNumber === selectedBankDetails.bankAccount
+      );
+      if (matchingBank) {
+        form.setFieldsValue({ selectedBankAccountId: matchingBank._id });
+        setSelectedBankDetails(matchingBank);
       }
     }
   }, [current, bankAccounts, form]);
 
   useEffect(() => {
-    if (current && termsList && termsList.length > 0) {
-      const { termsAndConditions } = current;
-      if (termsAndConditions) {
-        const matchingTerm = termsList.find((t) => t.content === termsAndConditions);
-        if (matchingTerm) {
-          form.setFieldsValue({ selectedTermsId: matchingTerm._id });
-        }
+    if (!current || !form || !termsList || termsList.length === 0) return;
+    const { termsAndConditions } = current;
+    if (termsAndConditions) {
+      const matchingTerm = termsList.find((t) => t.content === termsAndConditions);
+      if (matchingTerm) {
+        form.setFieldsValue({ selectedTermsId: matchingTerm._id });
       }
     }
   }, [current, termsList, form]);
 
-  useEffect(() => {
-    const currentTotal = calculate.add(calculate.multiply(subTotal, taxRate), subTotal);
-    setTaxTotal(Number.parseFloat(calculate.multiply(subTotal, taxRate)));
-    setTotal(Number.parseFloat(currentTotal));
-  }, [subTotal, taxRate]);
+  // Keep subTotal in sync for display (computed from items via parent)
+  // total and taxTotal are now computed by recalcTotals from item-level taxes
 
   const addField = useRef(null);
 
@@ -339,6 +411,13 @@ function LoadQuoteForm({ subTotal = 0, current = null, form }) {
               <Form.Item name="number" initialValue={lastNumber} rules={[{ required: true }]}>
                 <InputNumber prefix="#" style={{ width: '100%' }} />
               </Form.Item>
+              {/* Preview of formatted quote number */}
+              <div style={{ marginTop: '-16px', marginBottom: '12px' }}>
+                <Tag color="purple" style={{ fontSize: '12px', fontWeight: 600 }}>
+                  {current?.invoiceDisplayNumber ||
+                    formatDisplayNumber(lastNumber, getCurrentFYLabel())}
+                </Tag>
+              </div>
             </Col>
             <Col span={10}>
               <label className="invoice-label">{translate('YEAR')}</label>
@@ -381,10 +460,11 @@ function LoadQuoteForm({ subTotal = 0, current = null, form }) {
       {/* 2. Items Section */}
       <div className="invoice-items-section">
         <Row gutter={[12, 12]} className="invoice-items-header" align="middle">
-          <Col span={7}>{translate('Item')}</Col>
-          <Col span={6}>{translate('Description')}</Col>
-          <Col span={3}>{translate('Qty')}</Col>
-          <Col span={4}>{translate('Price')}</Col>
+          <Col span={6}>{translate('Item')}</Col>
+          <Col span={5}>{translate('Description')}</Col>
+          <Col span={2}>{translate('Qty')}</Col>
+          <Col span={3}>{translate('Price')}</Col>
+          <Col span={4}>{translate('Tax')}</Col>
           <Col span={4} style={{ textAlign: 'right' }}>{translate('Total')}</Col>
         </Row>
 
@@ -392,7 +472,7 @@ function LoadQuoteForm({ subTotal = 0, current = null, form }) {
           {(fields, { add, remove }) => (
             <>
               {fields.map((field) => (
-                <ItemRow key={field.key} remove={remove} field={field} current={current}></ItemRow>
+                <ItemRow key={field.key} remove={remove} field={field} current={current} taxOptions={taxOptions} onTotalsChange={recalcTotals}></ItemRow>
               ))}
               <Button
                 className="add-item-btn"
@@ -504,10 +584,13 @@ function LoadQuoteForm({ subTotal = 0, current = null, form }) {
 
           <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <Text strong type="secondary" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{translate('TAX RATE & CATEGORY')}</Text>
+              <Text strong type="secondary" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{translate('TAX TYPE')}</Text>
               <Radio.Group 
                 value={taxType} 
-                onChange={(e) => setTaxType(e.target.value)}
+                onChange={(e) => {
+                  setTaxType(e.target.value);
+                  if (form) form.setFieldsValue({ taxType: e.target.value });
+                }}
                 size="small"
                 buttonStyle="solid"
               >
@@ -515,35 +598,51 @@ function LoadQuoteForm({ subTotal = 0, current = null, form }) {
                 <Radio.Button value="cgst_sgst">CGST + SGST</Radio.Button>
               </Radio.Group>
             </div>
-            <Form.Item name="taxRate" noStyle rules={[{ required: true }]}>
-              <SelectAsync
-                value={taxRate}
-                onChange={handelTaxChange}
-                entity={'taxes'}
-                outputValue={'taxValue'}
-                displayLabels={['taxName']}
-                placeholder={translate('Select Tax')}
-                style={{ width: '100%', marginBottom: '8px' }}
-              />
+            {/* Hidden field to submit taxType */}
+            <Form.Item name="taxType" hidden initialValue="cgst_sgst">
+              <Input />
+            </Form.Item>
+            {/* Hidden legacy taxRate field for backward compat */}
+            <Form.Item name="taxRate" hidden initialValue={0}>
+              <InputNumber />
             </Form.Item>
           </div>
 
-          {taxType === 'igst' ? (
+          {/* Tax Breakdown per category */}
+          {taxBreakdown.length > 0 ? (
+            taxBreakdown.map((bd, idx) => (
+              taxType === 'igst' ? (
+                <div key={idx} className="summary-item">
+                  <Text type="secondary">
+                    {translate('IGST')} {bd.taxRate}% — {bd.taxCategoryName}
+                    <span style={{ fontSize: '10px', color: '#94a3b8', marginLeft: 4 }}>
+                      {translate('on')} {money.amountFormatter({ amount: bd.taxableAmount })}
+                    </span>
+                  </Text>
+                  <Text strong>{money.amountFormatter({ amount: bd.taxAmount })}</Text>
+                </div>
+              ) : (
+                <Fragment key={idx}>
+                  <div className="summary-item">
+                    <Text type="secondary">
+                      {translate('CGST')} {bd.taxRate / 2}% — {bd.taxCategoryName}
+                    </Text>
+                    <Text strong>{money.amountFormatter({ amount: bd.taxAmount / 2 })}</Text>
+                  </div>
+                  <div className="summary-item" style={{ borderTop: 'none', paddingTop: 0 }}>
+                    <Text type="secondary">
+                      {translate('SGST')} {bd.taxRate / 2}% — {bd.taxCategoryName}
+                    </Text>
+                    <Text strong>{money.amountFormatter({ amount: bd.taxAmount / 2 })}</Text>
+                  </div>
+                </Fragment>
+              )
+            ))
+          ) : (
             <div className="summary-item">
-              <Text type="secondary">{translate('Tax (IGST')} {taxRate * 100}%)</Text>
+              <Text type="secondary">{translate('Tax')}</Text>
               <Text strong>{money.amountFormatter({ amount: taxTotal })}</Text>
             </div>
-          ) : (
-            <>
-              <div className="summary-item">
-                <Text type="secondary">{translate('Tax (CGST')} {(taxRate * 100) / 2}%)</Text>
-                <Text strong>{money.amountFormatter({ amount: taxTotal / 2 })}</Text>
-              </div>
-              <div className="summary-item" style={{ borderTop: 'none', paddingTop: 0 }}>
-                <Text type="secondary">{translate('Tax (SGST')} {(taxRate * 100) / 2}%)</Text>
-                <Text strong>{money.amountFormatter({ amount: taxTotal / 2 })}</Text>
-              </div>
-            </>
           )}
 
           <div className="summary-item total">
@@ -567,38 +666,168 @@ function LoadQuoteForm({ subTotal = 0, current = null, form }) {
       {/* Customer Modal */}
       <Modal
         open={isCustomerModalVisible}
-        title={translate('Add New Client')}
+        title={
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <UserOutlined style={{ color: '#3b82f6' }} />
+            {translate('Add New Client')}
+          </span>
+        }
         onOk={handleCreateCustomer}
+        okText={translate('Create Client')}
         confirmLoading={isCustomerSubmitting}
         onCancel={handleCancelCustomerModal}
         destroyOnClose
+        width={560}
+        styles={{ body: { maxHeight: '70vh', overflowY: 'auto', paddingRight: 4 } }}
       >
-        <Form form={customerForm} layout="vertical">
-          <Form.Item name="name" label={translate('Client Name')} rules={[{ required: true }]}>
-            <Input />
+        <Form form={customerForm} layout="vertical" style={{ marginTop: 8 }}>
+
+          {/* Company / Name */}
+          <Form.Item
+            name="name"
+            label={translate('Company / Client Name')}
+            rules={[{ required: true, message: translate('Name is required') }]}
+          >
+            <Input prefix={<ShopOutlined />} placeholder="e.g. Acme Pvt. Ltd." size="large" />
           </Form.Item>
-          <Form.Item name="country" label={translate('Country')} rules={[{ required: true }]}>
-            <Select 
-              showSearch 
-              optionFilterProp="children"
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-              options={countryList.map(c => ({ label: translate(c.label), value: c.value }))} 
+
+          {/* Phone + Email */}
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item
+                name="phone"
+                label={translate('Phone')}
+                rules={[{ required: true, message: translate('Phone is required') }]}
+              >
+                <Input prefix={<PhoneOutlined />} placeholder="+91 98765 43210" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="email"
+                label={translate('Email')}
+                rules={[{ type: 'email', message: translate('Enter a valid email') }]}
+              >
+                <Input prefix={<MailOutlined />} placeholder="hello@company.com" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* GST Number */}
+          <Form.Item
+            name="gstNumber"
+            label={
+              <span>
+                {translate('GST Number')}{' '}
+                <Tooltip title={translate('State & state code are auto-detected from the first 2 digits of the GST number')}>
+                  <InfoCircleOutlined style={{ color: '#1677ff', cursor: 'help' }} />
+                </Tooltip>
+              </span>
+            }
+          >
+            <Input
+              prefix={<IdcardOutlined />}
+              placeholder="e.g. 24ABCDE1234F1Z5"
+              maxLength={15}
+              style={{ textTransform: 'uppercase' }}
+              onChange={(e) => {
+                const v = e.target.value || '';
+                if (v.length >= 2 && /^\d{2}$/.test(v.substring(0, 2))) {
+                  const matched = indianStates.find(s => s.code === v.substring(0, 2));
+                  if (matched) {
+                    customerForm.setFieldsValue({ state: matched.state, stateCode: matched.code });
+                  }
+                }
+              }}
             />
           </Form.Item>
-          <Form.Item name="address" label={translate('Address')}>
-            <Input />
+
+          <Divider orientation="left" plain style={{ margin: '12px 0' }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              <EnvironmentOutlined /> {translate('Address Details')}
+            </Text>
+          </Divider>
+
+          {/* Country */}
+          <Form.Item name="country" label={translate('Country')} initialValue="IN">
+            <Select
+              showSearch
+              placeholder={translate('Search country...')}
+              optionFilterProp="search"
+              options={countryOptions}
+              optionRender={(option) => <span>{option.data.label}</span>}
+              filterOption={(input, option) =>
+                (option?.search ?? '').includes(input.toLowerCase())
+              }
+            />
           </Form.Item>
-          <Form.Item name="phone" label={translate('Phone')} rules={[{ required: true }]}>
-            <Input />
+
+          {/* State + Code */}
+          <Row gutter={12}>
+            <Col span={16}>
+              <Form.Item
+                name="state"
+                label={translate('State')}
+                rules={[{ required: true, message: translate('State is required') }]}
+              >
+                <Select
+                  showSearch
+                  allowClear
+                  placeholder={translate('Select State')}
+                  filterOption={(input, option) =>
+                    (option?.['data-state'] ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  onChange={(value, option) => {
+                    if (option) customerForm.setFieldsValue({ stateCode: option['data-code'] });
+                    else customerForm.setFieldsValue({ stateCode: null });
+                  }}
+                >
+                  {indianStates.map((s) => (
+                    <Select.Option key={s.code} value={s.state} data-state={s.state} data-code={s.code}>
+                      <span style={{ color: '#94a3b8', fontSize: '11px', fontFamily: 'monospace', marginRight: 6 }}>
+                        {s.code}
+                      </span>
+                      {s.state}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="stateCode" label={translate('GST Code')}>
+                <Select
+                  showSearch
+                  allowClear
+                  placeholder="Code"
+                  filterOption={(input, option) =>
+                    (option?.['data-code'] ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  onChange={(value, option) => {
+                    if (option) customerForm.setFieldsValue({ state: option['data-state'] });
+                    else customerForm.setFieldsValue({ state: null });
+                  }}
+                >
+                  {indianStates.map((s) => (
+                    <Select.Option key={s.code} value={s.code} data-state={s.state} data-code={s.code}>
+                      {s.code}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* Billing Address */}
+          <Form.Item
+            name="billingAddress"
+            label={translate('Billing Address')}
+            rules={[{ required: true, message: translate('Billing address is required') }]}
+          >
+            <Input.TextArea rows={3} placeholder={translate('Full billing address including city & PIN')} />
           </Form.Item>
-          <Form.Item name="email" label={translate('Email')} rules={[{ type: 'email', required: true }]}>
-            <Input />
-          </Form.Item>
+
         </Form>
       </Modal>
     </div>
   );
 }
-

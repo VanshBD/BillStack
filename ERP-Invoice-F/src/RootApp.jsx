@@ -10,7 +10,12 @@ const BizInvoOs = lazy(() => import('./apps/BizInvoOs'));
 
 export default function RoutApp() {
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <Provider store={store}>
         <Suspense fallback={<PageLoader />}>
           <BizInvoOs />

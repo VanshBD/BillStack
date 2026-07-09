@@ -1,35 +1,25 @@
-import { notification } from 'antd';
-
+import notify from './notifyService';
 import codeMessage from './codeMessage';
 
 const successHandler = (response, options = { notifyOnSuccess: false, notifyOnFailed: true }) => {
   const { data } = response;
-  if (data && data.success === true) {
-    const message = response.data && data.message;
-    const successText = message || codeMessage[response.status];
 
+  if (data && data.success === true) {
     if (options.notifyOnSuccess) {
-      notification.config({
+      const message = data.message || codeMessage[response.status];
+      notify.success({
+        message: 'Request success',
+        description: message,
         duration: 2,
-        maxCount: 2,
-      });
-      notification.success({
-        message: `Request success`,
-        description: successText,
       });
     }
   } else {
-    const message = response.data && data.message;
-    const errorText = message || codeMessage[response.status];
-    const { status } = response;
     if (options.notifyOnFailed) {
-      notification.config({
+      const message = (data && data.message) || codeMessage[response.status];
+      notify.error({
+        message: `Request error ${response.status}`,
+        description: message,
         duration: 4,
-        maxCount: 2,
-      });
-      notification.error({
-        message: `Request error ${status}`,
-        description: errorText,
       });
     }
   }

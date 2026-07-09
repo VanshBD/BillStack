@@ -19,6 +19,7 @@ export default function AutoCompleteAsync({
   value, /// this is for update
   onChange, /// this is for update
   onAddNew, /// optional handler for add-new action instead of redirect
+  placeholder,
 }) {
   const translate = useLanguage();
 
@@ -39,7 +40,11 @@ export default function AutoCompleteAsync({
 
   const handleSelectChange = (newValue) => {
     isUpdating.current = false;
+
+    // "Add New" option — open modal or navigate, but never select it
     if (newValue === 'redirectURL' && withRedirect) {
+      // Reset to previous value so "Add New Client" doesn't appear selected
+      setCurrentValue(undefined);
       if (onAddNew) {
         onAddNew();
       } else {
@@ -48,23 +53,22 @@ export default function AutoCompleteAsync({
       return;
     }
 
-    if (onChange) {
-      if (newValue) {
-        const option = selectOptions.find((x) => (x[outputValue] || x) === newValue);
-        onChange(newValue[outputValue] || newValue, option);
-      } else {
-        onChange(null, null);
-      }
+    // Clear
+    if (!newValue) {
+      setCurrentValue(undefined);
+      if (onChange) onChange(null, null);
+      return;
     }
-  };
 
-  const handleOnSelect = (value) => {
-    setCurrentValue(value[outputValue] || value); // set nested value or value
+    const option = selectOptions.find((x) => (x[outputValue] || x) === newValue);
+    setCurrentValue(newValue);
+    if (onChange) {
+      onChange(newValue, option || null);
+    }
   };
 
   const [, cancel] = useDebounce(
     () => {
-      //  setState("Typing stopped");
       setDebouncedValue(valToSearch);
     },
     500,
@@ -100,8 +104,6 @@ export default function AutoCompleteAsync({
   const onSearch = (searchText) => {
     isSearching.current = true;
     setSearching(true);
-    // setOptions([]);
-    // setCurrentValue(undefined);
     setValToSearch(searchText);
   };
 
@@ -110,17 +112,60 @@ export default function AutoCompleteAsync({
       setOptions(result);
     } else {
       setSearching(false);
-      // setCurrentValue(undefined);
-      // setOptions([]);
     }
   }, [isSuccess, result]);
+
+  // Handle value prop — supports both object (edit mode) and plain ID string (after quick-create)
   useEffect(() => {
-    // this for update Form , it's for setField
-    if (value && isUpdating.current) {
-      setOptions([value]);
-      setCurrentValue(value[outputValue] || value); // set nested value or value
-      onChange(value[outputValue] || value);
+    if (!value) return;
+
+    // Object passed (edit mode) — extract ID and add to options for display
+    if (typeof value === 'object' && value !== null) {
+      const id = value[outputValue] || value._id;
+      if (id) {
+        setOptions((prev) => {
+          const exists = prev.find((x) => (x[outputValue] || x._id) === id);
+          return exists ? prev : [value, ...prev];
+        });
+        setCurrentValue(id);
+        if (isUpdating.current) {
+          onChange && onChange(id, value);
+          isUpdating.current = false;
+        }
+      }
+      return;
+    }
+
+    // Plain ID string passed (after quick-create from modal)
+    // Only fetch if it looks like a MongoDB ObjectId (24 hex chars)
+    if (typeof value === 'string' && value !== 'redirectURL') {
+      setCurrentValue(value);
       isUpdating.current = false;
+
+      const isMongoId = /^[a-f\d]{24}$/i.test(value);
+      if (isMongoId) {
+        // Only fetch if this ID isn't already in options
+        const alreadyInOptions = selectOptions.find((x) => (x[outputValue] || x._id) === value);
+        if (!alreadyInOptions) {
+          request.read({ entity, id: value })
+            .then((res) => {
+              if (res && res.result) {
+                setOptions((prev) => {
+                  const exists = prev.find((x) => (x[outputValue] || x._id) === value);
+                  return exists ? prev : [res.result, ...prev];
+                });
+              }
+            })
+            .catch(() => {/* silent */});
+        }
+      } else {
+        // Plain text value (e.g. itemName) — just show as-is without fetching
+        const syntheticOption = { [outputValue]: value, [displayLabels[0]]: value };
+        setOptions((prev) => {
+          const exists = prev.find((x) => (x[outputValue] || x._id) === value);
+          return exists ? prev : [syntheticOption, ...prev];
+        });
+      }
     }
   }, [value]);
 
@@ -129,20 +174,19 @@ export default function AutoCompleteAsync({
       loading={isLoading}
       showSearch
       allowClear
-      placeholder={translate('Search')}
+      placeholder={placeholder || translate('Search')}
       defaultActiveFirstOption={false}
       filterOption={false}
       notFoundContent={searching ? '... Searching' : <Empty />}
       value={currentValue}
       onSearch={onSearch}
       onClear={() => {
-        // setOptions([]);
-        // setCurrentValue(undefined);
+        setCurrentValue(undefined);
         setSearching(false);
+        if (onChange) onChange(null, null);
       }}
       onChange={handleSelectChange}
       style={{ minWidth: '220px' }}
-      // onSelect={handleOnSelect}
     >
       {selectOptions.map((optionField) => (
         <Select.Option

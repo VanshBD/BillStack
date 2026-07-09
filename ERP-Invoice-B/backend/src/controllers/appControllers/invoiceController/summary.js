@@ -126,32 +126,33 @@ const summary = async (req, res) => {
 
   let result = [];
 
-  const totalInvoices = response[0].totalInvoice ? response[0].totalInvoice[0] : 0;
+  const totalInvoices = response[0].totalInvoice && response[0].totalInvoice[0] ? response[0].totalInvoice[0] : { total: 0, count: 0 };
   const statusResult = response[0].statusCounts || [];
   const paymentStatusResult = response[0].paymentStatusCounts || [];
   const overdueResult = response[0].overdueCounts || [];
 
-  const statusResultMap = statusResult.map((item) => {
+  // Protect against division by zero
+  const statusResultMap = totalInvoices.count > 0 ? statusResult.map((item) => {
     return {
       ...item,
       percentage: Math.round((item.count / totalInvoices.count) * 100),
     };
-  });
+  }) : [];
 
-  const paymentStatusResultMap = paymentStatusResult.map((item) => {
+  const paymentStatusResultMap = totalInvoices.count > 0 ? paymentStatusResult.map((item) => {
     return {
       ...item,
       percentage: Math.round((item.count / totalInvoices.count) * 100),
     };
-  });
+  }) : [];
 
-  const overdueResultMap = overdueResult.map((item) => {
+  const overdueResultMap = totalInvoices.count > 0 ? overdueResult.map((item) => {
     return {
       ...item,
       status: 'overdue',
       percentage: Math.round((item.count / totalInvoices.count) * 100),
     };
-  });
+  }) : [];
 
   statuses.forEach((status) => {
     const found = [...paymentStatusResultMap, ...statusResultMap, ...overdueResultMap].find(

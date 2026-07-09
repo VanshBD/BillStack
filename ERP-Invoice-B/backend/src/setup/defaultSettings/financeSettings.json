@@ -25,6 +25,12 @@
   },
   {
     "settingCategory": "finance_settings",
+    "settingKey": "current_financial_year",
+    "settingValue": "",
+    "valueType": "string"
+  },
+  {
+    "settingCategory": "finance_settings",
     "settingKey": "invoice_prefix",
     "settingValue": "inv-",
     "valueType": "string"
