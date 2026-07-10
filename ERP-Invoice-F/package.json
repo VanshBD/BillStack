@@ -2,8 +2,8 @@
   "name": "bizinvo-erp-crm",
   "version": "4.1.0",
   "engines": {
-    "node": "20.9.0",
-    "npm": "10.2.4"
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
   },
   "type": "module",
   "dependencies": {
