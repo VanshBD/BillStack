@@ -58,10 +58,11 @@ function resolveParty(model) {
   return {
     name: src.name || '',
     company: src.company || '',
-    address: src.address || '',
+    address: src.billingAddress || src.address || '',
+    shippingAddress: src.shippingAddress || '',
     phone: src.phone || '',
     email: src.email || '',
-    gst: src.gst || src.taxID || '',
+    gst: src.gst || src.gstNumber || src.taxID || '',
     state: src.state || '',
     stateCode: src.stateCode || '',
   };
