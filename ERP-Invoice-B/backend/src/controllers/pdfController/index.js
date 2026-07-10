@@ -2,7 +2,6 @@ const pug = require('pug');
 const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
-const pdf = require('html-pdf');
 const { loadSettings } = require('@/middlewares/settings');
 const useLanguage = require('@/locale/useLanguage');
 const { useMoney, useDate } = require('@/settings');
@@ -230,26 +229,31 @@ exports.generatePdf = (
         numberToWordsIndian,
       });
 
-      pdf
-        .create(htmlContent, {
-          format: 'A4',
-          orientation: 'portrait',
-          width: '210mm',
-          height: '297mm',
-          border: {
-            top: '8mm',
-            right: '7mm',
-            bottom: '8mm',
-            left: '7mm',
-          },
-          renderDelay: 300,
-          phantomArgs: ['--web-security=no'],
-        })
-        .toFile(targetLocation, (error) => {
-          if (error) return reject(new Error(error));
-          if (callback) callback();
-          resolve();
-        });
+      const puppeteer = require('puppeteer');
+
+      const browser = await puppeteer.launch({
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      
+      await page.pdf({
+        path: targetLocation,
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '8mm',
+          right: '7mm',
+          bottom: '8mm',
+          left: '7mm',
+        },
+      });
+
+      await browser.close();
+
+      if (callback) callback();
+      resolve();
     } catch (error) {
       reject(error);
     }
