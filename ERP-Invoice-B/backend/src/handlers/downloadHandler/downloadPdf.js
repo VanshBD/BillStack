@@ -35,7 +35,14 @@ module.exports = downloadPdf = async (req, res, { directory, id }) => {
       result
     );
 
-    return res.download(targetLocation, fileId, (error) => {
+    // Generate a clean filename for the user to download
+    let downloadFileName = `${modelName.toLowerCase()}-${result.number || result._id}`;
+    if (result.year) {
+      downloadFileName += `-${result.year}`;
+    }
+    downloadFileName += '.pdf';
+
+    return res.download(targetLocation, downloadFileName, (error) => {
       if (error && !res.headersSent) {
         return res.status(500).json({
           success: false,

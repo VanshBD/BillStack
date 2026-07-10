@@ -3,11 +3,19 @@ const remove = async (Model, req, res) => {
   let updates = {
     removed: true,
   };
+
+  const query = {
+    _id: req.params.id,
+  };
+  
+  // If the model has a createdBy field, restrict it to the current admin
+  if (Model.schema.paths.createdBy && req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
+
   // Find the document by id and delete it
   const result = await Model.findOneAndUpdate(
-    {
-      _id: req.params.id,
-    },
+    query,
     { $set: updates },
     {
       new: true, // return the new result instead of the old one

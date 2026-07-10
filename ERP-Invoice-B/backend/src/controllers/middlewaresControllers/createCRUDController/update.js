@@ -1,11 +1,19 @@
 const update = async (Model, req, res) => {
   // Find document by id and updates with the required fields
   req.body.removed = false;
+
+  const query = {
+    _id: req.params.id,
+    removed: false,
+  };
+  
+  // If the model has a createdBy field, restrict it to the current admin
+  if (Model.schema.paths.createdBy && req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
+
   const result = await Model.findOneAndUpdate(
-    {
-      _id: req.params.id,
-      removed: false,
-    },
+    query,
     req.body,
     {
       new: true, // return the new result instead of the old one

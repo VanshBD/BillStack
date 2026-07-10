@@ -27,8 +27,8 @@ block content
     table(cellspacing="0" cellpadding="0" style="width:100%; border:none; border-collapse:collapse; table-layout:fixed;")
       colgroup
         if settings.company_logo
-          col(style="width:15%")
-          col(style="width:54%")
+          col(style="width:22%")
+          col(style="width:47%")
         else
           col(style="width:69%")
         col(style="width:31%")
@@ -45,8 +45,6 @@ block content
               .company-detail
                 if settings.company_state
                   span #{settings.company_state}
-                  if settings.company_pin_code
-                    |  - #{settings.company_pin_code}
                 if settings.company_country
                   | , #{settings.company_country}
             .company-contact

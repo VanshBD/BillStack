@@ -6,9 +6,17 @@ const filter = async (Model, req, res) => {
       message: 'filter not provided correctly',
     });
   }
-  const result = await Model.find({
+  
+  const query = {
     removed: false,
-  })
+  };
+  
+  // If the model has a createdBy field, restrict it to the current admin
+  if (Model.schema.paths.createdBy && req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
+
+  const result = await Model.find(query)
     .where(req.query.filter)
     .equals(req.query.equal)
     .exec();

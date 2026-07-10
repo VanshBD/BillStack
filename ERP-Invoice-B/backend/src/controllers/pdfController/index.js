@@ -131,7 +131,15 @@ exports.generatePdf = (
         dateFormat = 'DD/MM/YYYY';
       }
 
-      settings.public_server_file = config.publicServerFile;
+      let pubServerFile = config.publicServerFile || '';
+      if (pubServerFile && !pubServerFile.endsWith('/')) {
+        pubServerFile += '/';
+      }
+      settings.public_server_file = pubServerFile;
+
+      if (settings.company_logo && settings.company_logo.startsWith('/')) {
+        settings.company_logo = settings.company_logo.substring(1);
+      }
 
       // Theme — reads from settings or falls back to defaults
       const theme = {
