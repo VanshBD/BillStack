@@ -27,6 +27,7 @@ app.use(
       if (!origin) return callback(null, true);
       const allowedOrigins = [
         process.env.FRONTEND_URL,
+        'https://bill-stack-alpha.vercel.app',
         'http://localhost:3000',
         'http://localhost:5173',
         'http://localhost:8888',
@@ -34,7 +35,11 @@ app.use(
         'http://127.0.0.1:3000'
       ].filter(Boolean);
 
-      if (process.env.NODE_ENV !== 'production' || allowedOrigins.includes(origin)) {
+      if (
+        process.env.NODE_ENV !== 'production' ||
+        allowedOrigins.includes(origin) ||
+        (origin && origin.endsWith('.vercel.app'))
+      ) {
         callback(null, true);
       } else {
         callback(new Error('CORS policy: Not allowed by CORS'));
