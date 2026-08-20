@@ -35,9 +35,11 @@ const create = async (req, res) => {
 
   const { items = [], discount = 0 } = body;
 
+  const adminId = req.admin._id;
+
   // Determine tax type (IGST or CGST+SGST)
   const clientId = typeof value.client === 'object' ? value.client._id || value.client : value.client;
-  const invoiceTaxType = body.taxType || await autoDetectTaxType(clientId);
+  const invoiceTaxType = body.taxType || await autoDetectTaxType(clientId, adminId);
   body['taxType'] = invoiceTaxType;
 
   // Calculate per-item totals and build tax breakdown
@@ -126,7 +128,7 @@ const create = async (req, res) => {
   }
 
   // Check financial year rollover — resets counter if FY has changed
-  const fyLabel = await checkAndHandleFYRollover();
+  const fyLabel = await checkAndHandleFYRollover(adminId);
 
   // Build display number: e.g. "87-2025/26"
   const invoiceDisplayNumber = formatInvoiceNumber(body.number, fyLabel);
@@ -135,20 +137,20 @@ const create = async (req, res) => {
   let paymentStatus = calculate.sub(total, discount) === 0 ? 'paid' : 'unpaid';
 
   body['paymentStatus'] = paymentStatus;
-  body['createdBy'] = req.admin._id;
+  body['createdBy'] = adminId;
 
   // Get company GST number from settings
-  const companyGstNumber = await getCompanyGstNumber();
+  const companyGstNumber = await getCompanyGstNumber(adminId);
   body['companyGstNumber'] = companyGstNumber;
 
   // Get company details for comprehensive invoice
-  const companyDetails = await getCompanyDetails();
+  const companyDetails = await getCompanyDetails(adminId);
   body['companyDetails'] = companyDetails;
 
   // Get bank details - use selected bank account or default
   let bankDetails;
   if (body.selectedBankAccountId) {
-    bankDetails = await getBankAccountById(body.selectedBankAccountId);
+    bankDetails = await getBankAccountById(body.selectedBankAccountId, adminId);
     if (!bankDetails) {
       return res.status(400).json({
         success: false,
@@ -157,7 +159,7 @@ const create = async (req, res) => {
       });
     }
   } else {
-    bankDetails = await getDefaultBankAccount();
+    bankDetails = await getDefaultBankAccount(adminId);
   }
   
   if (bankDetails) {
@@ -176,12 +178,14 @@ const create = async (req, res) => {
     const TermsAndConditions = mongoose.model('TermsAndConditions');
     let defaultTerms = await TermsAndConditions.findOne({
       removed: false,
-      isDefault: true
+      isDefault: true,
+      createdBy: adminId
     });
     
     if (!defaultTerms) {
       defaultTerms = await TermsAndConditions.findOne({
-        removed: false
+        removed: false,
+        createdBy: adminId
       }).sort({ created: 1 });
     }
     
@@ -190,8 +194,8 @@ const create = async (req, res) => {
     } else {
       // Fallback to settings
       const { getDefaultTerms } = require('@/helpers/companyHelper');
-      const defaultTerms = await getDefaultTerms('invoice');
-      body['termsAndConditions'] = defaultTerms;
+      const defaultTermsText = await getDefaultTerms('invoice', adminId);
+      body['termsAndConditions'] = defaultTermsText;
     }
   }
 
@@ -207,10 +211,10 @@ const create = async (req, res) => {
     { pdf: fileId },
     { new: true }
   ).exec();
-  // Returning successfull response
 
   increaseBySettingKey({
     settingKey: 'last_invoice_number',
+    adminId
   });
 
   // Returning successfull response

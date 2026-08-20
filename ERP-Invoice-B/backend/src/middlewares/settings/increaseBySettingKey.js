@@ -2,28 +2,32 @@ const mongoose = require('mongoose');
 
 const Model = mongoose.model('Setting');
 
-const increaseBySettingKey = async ({ settingKey }) => {
+const increaseBySettingKey = async ({ settingKey, adminId }) => {
   try {
     if (!settingKey) {
       return null;
     }
 
+    const query = { settingKey };
+    const updateData = { $inc: { settingValue: 1 } };
+    if (adminId) {
+      query.createdBy = adminId;
+      updateData.$setOnInsert = { createdBy: adminId };
+    }
+
     const result = await Model.findOneAndUpdate(
-      { settingKey },
+      query,
+      updateData,
       {
-        $inc: { settingValue: 1 },
-      },
-      {
-        new: true, // return the new result instead of the old one
+        new: true,
+        upsert: true,
         runValidators: true,
       }
     ).exec();
 
-    // If no results found, return document not found
     if (!result) {
       return null;
     } else {
-      // Return success resposne
       return result;
     }
   } catch {

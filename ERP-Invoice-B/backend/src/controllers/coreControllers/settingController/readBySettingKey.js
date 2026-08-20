@@ -14,9 +14,17 @@ const readBySettingKey = async (req, res) => {
     });
   }
 
-  const result = await Model.findOne({
-    settingKey,
-  });
+  const query = { settingKey };
+  if (req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
+
+  let result = await Model.findOne(query);
+
+  // Fallback to global setting if no company-specific setting exists
+  if (!result && query.createdBy) {
+    result = await Model.findOne({ settingKey, createdBy: { $exists: false } });
+  }
 
   // If no results found, return document not found
   if (!result) {

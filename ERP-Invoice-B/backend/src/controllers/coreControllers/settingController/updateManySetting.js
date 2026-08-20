@@ -15,11 +15,18 @@ const updateManySetting = async (req, res) => {
     }
 
     const { settingKey, settingValue } = setting;
+    const filter = { settingKey: settingKey };
+    const update = { settingValue: settingValue };
+
+    if (req.admin && req.admin._id) {
+      filter.createdBy = req.admin._id;
+      update.createdBy = req.admin._id;
+    }
 
     updateDataArray.push({
       updateOne: {
-        filter: { settingKey: settingKey },
-        update: { settingValue: settingValue },
+        filter,
+        update: { $set: update },
         upsert: true,
       },
     });

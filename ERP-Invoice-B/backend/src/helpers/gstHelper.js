@@ -43,15 +43,17 @@ const GST_STATE_CODES = {
 /**
  * Get company GST number from settings
  */
-const getCompanyGstNumber = async () => {
+const getCompanyGstNumber = async (adminId) => {
   try {
     const Setting = mongoose.model('Setting');
-    const gstSetting = await Setting.findOne({
+    const query = {
       settingKey: 'company_gst_number',
       enabled: true,
       removed: false
-    });
-    
+    };
+    if (adminId) query.$or = [{ createdBy: adminId }, { createdBy: { $exists: false } }];
+
+    const gstSetting = await Setting.findOne(query);
     return gstSetting ? gstSetting.settingValue : '';
   } catch (error) {
     console.error('Error fetching company GST number:', error);
@@ -62,15 +64,17 @@ const getCompanyGstNumber = async () => {
 /**
  * Get company state from settings
  */
-const getCompanyState = async () => {
+const getCompanyState = async (adminId) => {
   try {
     const Setting = mongoose.model('Setting');
-    const stateSetting = await Setting.findOne({
+    const query = {
       settingKey: 'company_state',
       enabled: true,
       removed: false
-    });
-    
+    };
+    if (adminId) query.$or = [{ createdBy: adminId }, { createdBy: { $exists: false } }];
+
+    const stateSetting = await Setting.findOne(query);
     return stateSetting ? stateSetting.settingValue : '';
   } catch (error) {
     console.error('Error fetching company state:', error);
@@ -81,15 +85,17 @@ const getCompanyState = async () => {
 /**
  * Get company state code from settings
  */
-const getCompanyStateCode = async () => {
+const getCompanyStateCode = async (adminId) => {
   try {
     const Setting = mongoose.model('Setting');
-    const stateCodeSetting = await Setting.findOne({
+    const query = {
       settingKey: 'company_state_code',
       enabled: true,
       removed: false
-    });
-    
+    };
+    if (adminId) query.$or = [{ createdBy: adminId }, { createdBy: { $exists: false } }];
+
+    const stateCodeSetting = await Setting.findOne(query);
     return stateCodeSetting ? stateCodeSetting.settingValue : '';
   } catch (error) {
     console.error('Error fetching company state code:', error);
@@ -183,7 +189,7 @@ const determineTaxType = (companyState, clientState, companyStateCode = null, cl
 /**
  * Auto-detect tax type for an invoice/quote based on client and company settings
  */
-const autoDetectTaxType = async (clientId) => {
+const autoDetectTaxType = async (clientId, adminId) => {
   try {
     const Client = mongoose.model('Client');
     const client = await Client.findById(clientId);
@@ -192,8 +198,8 @@ const autoDetectTaxType = async (clientId) => {
       return 'cgst_sgst'; // Default
     }
     
-    const companyState = await getCompanyState();
-    const companyStateCode = await getCompanyStateCode();
+    const companyState = await getCompanyState(adminId);
+    const companyStateCode = await getCompanyStateCode(adminId);
     
     return determineTaxType(
       companyState,

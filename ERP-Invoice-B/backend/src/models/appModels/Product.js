@@ -71,8 +71,8 @@ const productSchema = new mongoose.Schema({
   },
 });
 
-// Unique SKU if provided (case-insensitive)
-productSchema.index({ sku: 1 }, { unique: true, sparse: true, collation: { locale: 'en', strength: 2 } });
+// Unique SKU per company if provided (case-insensitive)
+productSchema.index({ sku: 1, createdBy: 1 }, { unique: true, sparse: true, collation: { locale: 'en', strength: 2 } });
 
 // Pre-save hook to generate SKU automatically
 productSchema.pre('save', async function (next) {

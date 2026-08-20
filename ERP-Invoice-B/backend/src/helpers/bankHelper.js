@@ -1,13 +1,12 @@
 const mongoose = require('mongoose');
 
-const getAllBankAccounts = async () => {
+const getAllBankAccounts = async (adminId) => {
   try {
     const BankAccount = mongoose.model('BankAccount');
-    const bankAccounts = await BankAccount.find({
-      removed: false,
-      enabled: true
-    }).sort({ isDefault: -1, created: -1 });
-    
+    const query = { removed: false, enabled: true };
+    if (adminId) query.createdBy = adminId;
+
+    const bankAccounts = await BankAccount.find(query).sort({ isDefault: -1, created: -1 });
     return bankAccounts;
   } catch (error) {
     console.error('Error fetching bank accounts:', error.message);
@@ -15,24 +14,21 @@ const getAllBankAccounts = async () => {
   }
 };
 
-const getDefaultBankAccount = async () => {
+const getDefaultBankAccount = async (adminId) => {
   try {
     const BankAccount = mongoose.model('BankAccount');
-    const defaultAccount = await BankAccount.findOne({
-      removed: false,
-      enabled: true,
-      isDefault: true
-    });
-    
+    const query = { removed: false, enabled: true, isDefault: true };
+    if (adminId) query.createdBy = adminId;
+
+    const defaultAccount = await BankAccount.findOne(query);
     if (defaultAccount) {
       return defaultAccount;
     }
     
-    // If no default account, return the first enabled account
-    const firstAccount = await BankAccount.findOne({
-      removed: false,
-      enabled: true
-    }).sort({ created: 1 });
+    // If no default account, return the first enabled account for this admin
+    const firstQuery = { removed: false, enabled: true };
+    if (adminId) firstQuery.createdBy = adminId;
+    const firstAccount = await BankAccount.findOne(firstQuery).sort({ created: 1 });
     
     return firstAccount;
   } catch (error) {
@@ -41,15 +37,13 @@ const getDefaultBankAccount = async () => {
   }
 };
 
-const getBankAccountById = async (bankAccountId) => {
+const getBankAccountById = async (bankAccountId, adminId) => {
   try {
     const BankAccount = mongoose.model('BankAccount');
-    const bankAccount = await BankAccount.findOne({
-      _id: bankAccountId,
-      removed: false,
-      enabled: true
-    });
-    
+    const query = { _id: bankAccountId, removed: false, enabled: true };
+    if (adminId) query.createdBy = adminId;
+
+    const bankAccount = await BankAccount.findOne(query);
     return bankAccount;
   } catch (error) {
     console.error('Error fetching bank account by ID:', error.message);

@@ -224,8 +224,8 @@ const invoiceSchema = new mongoose.Schema({
   },
 });
 
-// Ensure invoice number is unique within a year
-invoiceSchema.index({ number: 1 }, { unique: true });
+// Ensure invoice number is unique within a year for each admin/company
+invoiceSchema.index({ number: 1, year: 1, createdBy: 1 }, { unique: true });
 
 invoiceSchema.plugin(require('mongoose-autopopulate'));
 module.exports = mongoose.model('Invoice', invoiceSchema);

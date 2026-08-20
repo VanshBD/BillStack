@@ -2,20 +2,25 @@ const mongoose = require('mongoose');
 
 const Model = mongoose.model('Setting');
 
-const readBySettingKey = async ({ settingKey }) => {
+const readBySettingKey = async ({ settingKey, adminId }) => {
   try {
-    // Find document by id
-
     if (!settingKey) {
       return null;
     }
 
-    const result = await Model.findOne({ settingKey });
-    // If no results found, return document not found
+    const query = { settingKey };
+    if (adminId) {
+      query.createdBy = adminId;
+    }
+
+    let result = await Model.findOne(query);
+    if (!result && adminId) {
+      result = await Model.findOne({ settingKey, createdBy: { $exists: false } });
+    }
+
     if (!result) {
       return null;
     } else {
-      // Return success resposne
       return result;
     }
   } catch {

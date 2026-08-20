@@ -23,8 +23,22 @@ const app = express();
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow any origin
-      callback(null, true);
+      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      const allowedOrigins = [
+        process.env.FRONTEND_URL,
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://localhost:8888',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:3000'
+      ].filter(Boolean);
+
+      if (process.env.NODE_ENV !== 'production' || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS policy: Not allowed by CORS'));
+      }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

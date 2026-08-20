@@ -21,13 +21,20 @@ const updateBySettingKey = async (req, res) => {
       message: 'No settingValue provided ',
     });
   }
+  const query = { settingKey };
+  const updateData = { settingValue };
+
+  if (req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+    updateData.createdBy = req.admin._id;
+  }
+
   const result = await Model.findOneAndUpdate(
-    { settingKey },
-    {
-      settingValue,
-    },
+    query,
+    { $set: updateData },
     {
       new: true, // return the new result instead of the old one
+      upsert: true,
       runValidators: true,
     }
   ).exec();

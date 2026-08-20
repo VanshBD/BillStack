@@ -4,9 +4,26 @@ const fs = require('fs');
 const { generate: uniqueId } = require('shortid');
 
 const mongoose = require('mongoose');
-mongoose.connect(config.database);
+async function connectDB() {
+  const uris = [
+    config.database,
+    'mongodb://127.0.0.1:27017/billstack-db',
+    'mongodb://127.0.0.1:27017/idurar-db'
+  ];
+  for (const uri of uris) {
+    if (!uri) continue;
+    try {
+      await mongoose.connect(uri, { serverSelectionTimeoutMS: 3000 });
+      console.log(`Connected to database: ${mongoose.connection.name}`);
+      return;
+    } catch (e) {
+      // try next
+    }
+  }
+}
 
 async function setupApp() {
+  await connectDB();
   try {
     const Admin = require('../models/coreModels/Admin');
     const AdminPassword = require('../models/coreModels/AdminPassword');
@@ -42,11 +59,18 @@ async function setupApp() {
     const settingsFiles = globSync('./src/setup/defaultSettings/**/*.json');
 
     for (const filePath of settingsFiles) {
-      const file = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      settingFiles.push(...file);
+      try {
+        const file = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        if (Array.isArray(file)) {
+          const actualSettings = file.filter(s => s && s.settingKey && s.settingCategory);
+          settingFiles.push(...actualSettings);
+        }
+      } catch (e) { /* skip */ }
     }
 
-    await Setting.insertMany(settingFiles);
+    if (settingFiles.length > 0) {
+      await Setting.insertMany(settingFiles);
+    }
 
     console.log('👍 Settings created : Done!');
 

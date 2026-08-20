@@ -30,10 +30,13 @@ const getCurrentFY = (date = new Date()) => {
  * Get the stored FY label from settings.
  * Returns null if not set yet.
  */
-const getStoredFYLabel = async () => {
+const getStoredFYLabel = async (adminId) => {
   try {
     const Setting = mongoose.model('Setting');
-    const doc = await Setting.findOne({ settingKey: 'current_financial_year', removed: false });
+    const query = { settingKey: 'current_financial_year', removed: false };
+    if (adminId) query.createdBy = adminId;
+
+    const doc = await Setting.findOne(query);
     return doc ? doc.settingValue : null;
   } catch {
     return null;
@@ -43,20 +46,23 @@ const getStoredFYLabel = async () => {
 /**
  * Update the stored FY label in settings.
  */
-const setStoredFYLabel = async (label) => {
+const setStoredFYLabel = async (label, adminId) => {
   try {
     const Setting = mongoose.model('Setting');
-    await Setting.findOneAndUpdate(
-      { settingKey: 'current_financial_year' },
-      {
-        settingKey: 'current_financial_year',
-        settingCategory: 'finance_settings',
-        settingValue: label,
-        valueType: 'string',
-        removed: false,
-      },
-      { upsert: true, new: true }
-    );
+    const query = { settingKey: 'current_financial_year' };
+    const updateData = {
+      settingKey: 'current_financial_year',
+      settingCategory: 'finance_settings',
+      settingValue: label,
+      valueType: 'string',
+      removed: false,
+    };
+    if (adminId) {
+      query.createdBy = adminId;
+      updateData.createdBy = adminId;
+    }
+
+    await Setting.findOneAndUpdate(query, updateData, { upsert: true, new: true });
   } catch (err) {
     console.error('Error updating FY setting:', err.message);
   }
@@ -65,12 +71,16 @@ const setStoredFYLabel = async (label) => {
 /**
  * Reset the invoice counter back to 1 in settings.
  */
-const resetInvoiceCounter = async () => {
+const resetInvoiceCounter = async (adminId) => {
   try {
     const Setting = mongoose.model('Setting');
+    const query = { settingKey: 'last_invoice_number' };
+    if (adminId) query.createdBy = adminId;
+
     await Setting.findOneAndUpdate(
-      { settingKey: 'last_invoice_number' },
-      { $set: { settingValue: 0 } }
+      query,
+      { $set: { settingValue: 0 } },
+      { upsert: true }
     );
     console.log('🔄 Invoice counter reset for new financial year.');
   } catch (err) {
@@ -81,12 +91,16 @@ const resetInvoiceCounter = async () => {
 /**
  * Reset the quote counter back to 0 in settings.
  */
-const resetQuoteCounter = async () => {
+const resetQuoteCounter = async (adminId) => {
   try {
     const Setting = mongoose.model('Setting');
+    const query = { settingKey: 'last_quote_number' };
+    if (adminId) query.createdBy = adminId;
+
     await Setting.findOneAndUpdate(
-      { settingKey: 'last_quote_number' },
-      { $set: { settingValue: 0 } }
+      query,
+      { $set: { settingValue: 0 } },
+      { upsert: true }
     );
     console.log('🔄 Quote counter reset for new financial year.');
   } catch (err) {
@@ -99,19 +113,19 @@ const resetQuoteCounter = async () => {
  * Call this at the start of invoice/quote creation.
  * Returns the current FY label string e.g. "2025/26".
  */
-const checkAndHandleFYRollover = async () => {
+const checkAndHandleFYRollover = async (adminId) => {
   const currentFY = getCurrentFY();
-  const storedLabel = await getStoredFYLabel();
+  const storedLabel = await getStoredFYLabel(adminId);
 
   if (storedLabel && storedLabel !== currentFY.label) {
     // FY has changed — reset counters
     console.log(`📅 Financial year changed: ${storedLabel} → ${currentFY.label}`);
-    await resetInvoiceCounter();
-    await resetQuoteCounter();
+    await resetInvoiceCounter(adminId);
+    await resetQuoteCounter(adminId);
   }
 
   // Always update stored FY to current
-  await setStoredFYLabel(currentFY.label);
+  await setStoredFYLabel(currentFY.label, adminId);
 
   return currentFY.label;
 };

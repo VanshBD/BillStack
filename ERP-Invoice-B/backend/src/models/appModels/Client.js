@@ -16,8 +16,6 @@ const schema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    unique: true,
-    sparse: true,
   },
   gstNumber: String,
   gst: String,
@@ -33,8 +31,6 @@ const schema = new mongoose.Schema({
   },
   email: {
     type: String,
-    unique: true,
-    sparse: true,
     lowercase: true,
     match: /.+\@.+\..+/,
   },
@@ -49,6 +45,9 @@ const schema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+schema.index({ phone: 1, createdBy: 1 }, { unique: true, sparse: true });
+schema.index({ email: 1, createdBy: 1 }, { unique: true, sparse: true });
 
 schema.plugin(require('mongoose-autopopulate'));
 

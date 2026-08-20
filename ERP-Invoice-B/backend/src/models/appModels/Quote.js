@@ -186,7 +186,8 @@ const quoteSchema = new mongoose.Schema({
   },
 });
 
-quoteSchema.index({ number: 1 }, { unique: true });
+// Ensure quote number is unique within a year for each admin/company
+quoteSchema.index({ number: 1, year: 1, createdBy: 1 }, { unique: true });
 
 quoteSchema.plugin(require('mongoose-autopopulate'));
 module.exports = mongoose.model('Quote', quoteSchema);

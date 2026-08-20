@@ -2,12 +2,14 @@ const mongoose = require('mongoose');
 
 const Model = mongoose.model('Setting');
 
-const listAllSettings = async () => {
+const listAllSettings = async (adminId) => {
   try {
-    //  Query the database for a list of all results
-    const result = await Model.find({
-      removed: false,
-    }).exec();
+    const query = { removed: false };
+    if (adminId) {
+      query.$or = [{ createdBy: adminId }, { createdBy: { $exists: false } }];
+    }
+
+    const result = await Model.find(query).exec();
 
     if (result.length > 0) {
       return result;

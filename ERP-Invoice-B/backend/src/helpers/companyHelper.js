@@ -1,13 +1,18 @@
 const mongoose = require('mongoose');
 
-const getCompanyDetails = async () => {
+const getCompanyDetails = async (adminId) => {
   try {
     const Setting = mongoose.model('Setting');
-    const companySettings = await Setting.find({
+    const query = {
       settingCategory: 'company_settings',
       enabled: true,
       removed: false
-    });
+    };
+    if (adminId) {
+      query.$or = [{ createdBy: adminId }, { createdBy: { $exists: false } }];
+    }
+
+    const companySettings = await Setting.find(query);
     
     if (!companySettings || companySettings.length === 0) {
       console.warn('No company settings found, using defaults');
@@ -44,16 +49,20 @@ const getCompanyDetails = async () => {
   }
 };
 
-const getDefaultTerms = async (type = 'invoice') => {
+const getDefaultTerms = async (type = 'invoice', adminId) => {
   try {
     const Setting = mongoose.model('Setting');
     const settingKey = type === 'invoice' ? 'default_invoice_terms' : 'default_quote_terms';
-    
-    const termsSetting = await Setting.findOne({
+    const query = {
       settingKey: settingKey,
       enabled: true,
       removed: false
-    });
+    };
+    if (adminId) {
+      query.$or = [{ createdBy: adminId }, { createdBy: { $exists: false } }];
+    }
+    
+    const termsSetting = await Setting.findOne(query);
     
     if (!termsSetting) {
       console.warn(`No ${type} terms found, using default`);
@@ -70,15 +79,20 @@ const getDefaultTerms = async (type = 'invoice') => {
   }
 };
 
-const getBankDetails = async () => {
+const getBankDetails = async (adminId) => {
   try {
     const Setting = mongoose.model('Setting');
-    const bankSettings = await Setting.find({
+    const query = {
       settingCategory: 'company_settings',
       settingKey: { $in: ['company_bank_name', 'company_bank_account', 'company_bank_branch', 'company_bank_ifsc', 'company_account_holder_name'] },
       enabled: true,
       removed: false
-    });
+    };
+    if (adminId) {
+      query.$or = [{ createdBy: adminId }, { createdBy: { $exists: false } }];
+    }
+
+    const bankSettings = await Setting.find(query);
     
     if (!bankSettings || bankSettings.length === 0) {
       console.warn('No bank settings found, using defaults');

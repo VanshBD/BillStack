@@ -35,6 +35,12 @@ const settingSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin',
+  },
 });
+
+settingSchema.index({ settingKey: 1, createdBy: 1 }, { unique: true });
 
 module.exports = mongoose.model('Setting', settingSchema);

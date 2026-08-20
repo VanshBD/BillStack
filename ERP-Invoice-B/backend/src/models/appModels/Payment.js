@@ -58,7 +58,8 @@ const paymentSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
-paymentSchema.index({ number: 1 }, { unique: true });
+// Ensure payment number is unique for each admin/company
+paymentSchema.index({ number: 1, createdBy: 1 }, { unique: true });
 
 paymentSchema.plugin(require('mongoose-autopopulate'));
 module.exports = mongoose.model('Payment', paymentSchema);
