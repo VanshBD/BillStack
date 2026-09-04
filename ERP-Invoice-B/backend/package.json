@@ -12,6 +12,7 @@
     "production": "NODE_ENV=production",
     "start:prod": "node src/server.js",
     "setup": "node src/setup/setup.js",
+    "seed": "node src/setup/seedAdmins.js",
     "upgrade": "node src/setup/upgrade.js",
     "reset": "node src/setup/reset.js"
   },
