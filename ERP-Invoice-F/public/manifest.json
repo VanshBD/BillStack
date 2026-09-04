@@ -1,0 +1,18 @@
+{
+  "short_name": "BillStack",
+  "name": "BillStack ERP & Invoicing System",
+  "description": "Comprehensive Enterprise Resource Planning and Invoicing Solution",
+  "icons": [
+    {
+      "src": "/src/logo-icon.png",
+      "type": "image/png",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#1890ff",
+  "display": "standalone",
+  "orientation": "portrait"
+}

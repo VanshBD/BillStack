@@ -39,7 +39,7 @@ export default function Navigation() {
   return isMobile ? <MobileSidebar /> : <Sidebar collapsible={false} />;
 }
 
-function Sidebar({ collapsible, isMobile = false }) {
+function Sidebar({ collapsible, isMobile = false, onMenuClick }) {
   let location = useLocation();
 
   const { state: stateApp, appContextAction } = useAppContext();
@@ -163,7 +163,10 @@ function Sidebar({ collapsible, isMobile = false }) {
     >
       <div
         className="logo"
-        onClick={() => navigate('/')}
+        onClick={() => {
+          if (onMenuClick) onMenuClick();
+          navigate('/');
+        }}
         style={{
           cursor: 'pointer',
         }}
@@ -187,6 +190,9 @@ function Sidebar({ collapsible, isMobile = false }) {
         mode="inline"
         theme={'light'}
         selectedKeys={[currentPath]}
+        onClick={() => {
+          if (onMenuClick) onMenuClick();
+        }}
         style={{
           width: 256,
         }}
@@ -217,13 +223,12 @@ function MobileSidebar() {
       </Button>
       <Drawer
         width={250}
-        // style={{ backgroundColor: 'rgba(255, 255, 255, 1)' }}
         placement={'left'}
         closable={false}
         onClose={onClose}
         open={visible}
       >
-        <Sidebar collapsible={false} isMobile={true} />
+        <Sidebar collapsible={false} isMobile={true} onMenuClick={onClose} />
       </Drawer>
     </>
   );

@@ -7,9 +7,12 @@ import { Layout } from 'antd';
 import { useCrudContext } from '@/context/crud';
 import { useAppContext } from '@/context/appContext';
 
+import useResponsive from '@/hooks/useResponsive';
+
 const { Content } = Layout;
 
 const ContentBox = ({ children }) => {
+  const { isMobile } = useResponsive();
   const { state: stateCrud, crudContextAction } = useCrudContext();
   const { state: stateApp } = useAppContext();
   const { isPanelClose } = stateCrud;
@@ -31,19 +34,15 @@ const ContentBox = ({ children }) => {
     return () => clearTimeout(timer);
   }, [isPanelClose]);
 
-  // useEffect(() => {
-  //   if (!isNavMenuClose) {
-  //     panel.close();
-  //   }
-  // }, [isNavMenuClose]);
   return (
     <Content
       className="whiteBox shadow layoutPadding"
       style={{
-        margin: '30px auto',
+        margin: isMobile ? '15px auto' : '30px auto',
         width: '100%',
         maxWidth: '100%',
         flex: 'none',
+        padding: isMobile ? '16px' : undefined,
       }}
     >
       {children}

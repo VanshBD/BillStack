@@ -85,9 +85,26 @@ h6 {
   .tabContent .ant-tabs {
     display: block;
   }
+  .ant-page-header-heading {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .ant-page-header-heading-extra {
+    flex-wrap: wrap;
+    width: 100%;
+    margin-top: 8px;
+    gap: 8px;
+  }
+  .ant-page-header-heading-extra > * {
+    max-width: 100%;
+  }
+  .ant-table-wrapper {
+    overflow-x: auto;
+  }
 }
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
   }
 }
+

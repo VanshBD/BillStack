@@ -92,10 +92,9 @@ export default function ItemRow({ field, remove, current = null, taxOptions = []
   };
 
   return (
-    <Row gutter={[8, 8]} className="invoice-item-row" align="middle" style={{ position: 'relative', marginBottom: 2 }}>
-
-      {/* Product / Item Name — col 6 */}
-      <Col span={6}>
+    <Row gutter={[8, 8]} className="invoice-item-row" align="middle">
+      {/* Product / Item Name */}
+      <Col xs={24} sm={12} md={6}>
         <Form.Item name={[field.name, 'itemName']} rules={[{ required: true, message: 'Required' }]} style={{ marginBottom: 0 }}>
           <AutoCompleteAsync
             entity="product"
@@ -107,27 +106,28 @@ export default function ItemRow({ field, remove, current = null, taxOptions = []
         </Form.Item>
       </Col>
 
-      {/* Description — col 5 */}
-      <Col span={5}>
+      {/* Description */}
+      <Col xs={24} sm={12} md={5}>
         <Form.Item name={[field.name, 'description']} style={{ marginBottom: 0 }}>
           <Input placeholder="Description" size="small" />
         </Form.Item>
       </Col>
 
-      {/* Qty — col 2 */}
-      <Col span={2}>
+      {/* Qty */}
+      <Col xs={12} sm={6} md={2}>
         <Form.Item name={[field.name, 'quantity']} rules={[{ required: true, message: 'Qty' }]} style={{ marginBottom: 0 }}>
           <InputNumber
             style={{ width: '100%' }}
             min={1}
             size="small"
+            placeholder="Qty"
             onChange={(v) => setQuantity(v || 0)}
           />
         </Form.Item>
       </Col>
 
-      {/* Price — col 3, using Space.Compact (addonBefore deprecated in antd v5) */}
-      <Col span={3}>
+      {/* Price */}
+      <Col xs={12} sm={6} md={3}>
         <Form.Item name={[field.name, 'price']} rules={[{ required: true, message: 'Price' }]} style={{ marginBottom: 0 }}>
           <Space.Compact style={{ width: '100%' }}>
             <span style={{
@@ -143,14 +143,15 @@ export default function ItemRow({ field, remove, current = null, taxOptions = []
               min={0}
               controls={false}
               size="small"
+              placeholder="Price"
               style={{ width: '100%', borderRadius: '0 4px 4px 0' }}
             />
           </Space.Compact>
         </Form.Item>
       </Col>
 
-      {/* Tax Category — col 4 */}
-      <Col span={4}>
+      {/* Tax Category */}
+      <Col xs={14} sm={8} md={4}>
         <Tooltip title="Tax auto-filled from product. Override if needed.">
           <Form.Item name={[field.name, 'taxCategory']} style={{ marginBottom: 0 }}>
             <Select
@@ -175,26 +176,24 @@ export default function ItemRow({ field, remove, current = null, taxOptions = []
         <Form.Item name={[field.name, 'taxAmount']} hidden><InputNumber /></Form.Item>
       </Col>
 
-      {/* Line Total — col 4 */}
-      <Col span={4} style={{ textAlign: 'right' }}>
-        <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '13px' }}>
-          {money.amountFormatter({ amount: lineTotal })}
-        </div>
-        {localTaxRate > 0 && (
-          <div style={{ fontSize: '10px', color: '#94a3b8' }}>
-            +Tax: {money.amountFormatter({ amount: lineTax })}
+      {/* Line Total & Delete */}
+      <Col xs={10} sm={4} md={4} style={{ textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+        <div>
+          <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '13px' }}>
+            {money.amountFormatter({ amount: lineTotal })}
           </div>
-        )}
-        <Form.Item name={[field.name, 'total']} hidden><InputNumber /></Form.Item>
-      </Col>
-
-      {/* Delete button */}
-      <div style={{ position: 'absolute', right: '-28px', top: '8px' }}>
+          {localTaxRate > 0 && (
+            <div style={{ fontSize: '10px', color: '#94a3b8' }}>
+              +Tax: {money.amountFormatter({ amount: lineTax })}
+            </div>
+          )}
+          <Form.Item name={[field.name, 'total']} hidden><InputNumber /></Form.Item>
+        </div>
         <DeleteOutlined
           onClick={() => remove(field.name)}
-          style={{ color: '#ff4d4f', cursor: 'pointer', fontSize: '16px' }}
+          style={{ color: '#ff4d4f', cursor: 'pointer', fontSize: '16px', marginLeft: '6px' }}
         />
-      </div>
+      </Col>
     </Row>
   );
 }
