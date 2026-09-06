@@ -28,9 +28,15 @@ export default function ReadItem({ config }) {
       const propsKey = props.dataIndex;
       const propsTitle = props.title;
       const isDate = props.isDate || false;
+      const displayLabels = props.displayLabels || [];
       let value = valueByString(currentResult, propsKey);
       if (typeof value === 'object' && value !== null) {
-        value = value.name || value.label || value.title || JSON.stringify(value);
+        if (value.taxName) {
+          value = `${value.taxName}${value.taxValue !== undefined ? ` (${value.taxValue}%)` : ''}`;
+        } else {
+          const customLabel = displayLabels.map((l) => value[l]).filter(Boolean).join(' ');
+          value = customLabel || value.name || value.label || value.title || value.taxName || '';
+        }
       }
       value = isDate ? dayjs(value).format(dateFormat) : value;
       list.push({ propsKey, label: propsTitle, value: value });

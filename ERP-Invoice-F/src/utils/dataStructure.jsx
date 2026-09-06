@@ -14,6 +14,7 @@ export const dataForRead = ({ fields, translate }) => {
       title: field.label ? field.label : key,
       dataIndex: field.dataIndex ? field.dataIndex.join('.') : key,
       isDate: field.type === 'date',
+      displayLabels: field.displayLabels,
     });
   });
 
@@ -79,8 +80,12 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat, en
         render: (text, record) => {
           let displayValue = text;
           if (typeof text === 'object' && text !== null) {
-            displayValue =
-              text[field.displayLabels?.[0]] || text.name || text.label || text.title || '';
+            if (text.taxName) {
+              displayValue = `${text.taxName}${text.taxValue !== undefined ? ` (${text.taxValue}%)` : ''}`;
+            } else {
+              displayValue =
+                text[field.displayLabels?.[0]] || text.name || text.label || text.title || text.taxName || '';
+            }
           }
           return (
             <Tag bordered={false} color={field.color || record[key]?.color || record.color}>
