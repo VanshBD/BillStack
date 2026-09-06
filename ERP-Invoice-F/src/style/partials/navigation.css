@@ -1,25 +1,29 @@
 .navigation {
   position: sticky;
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
   top: 0;
   left: 0;
-  z-index: 1000;
-  background: #fff;
+  height: 100vh;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  z-index: 100;
+  background: #ffffff;
   border-right: 1px solid #edf0f5;
 }
 
-.logo {
-  height: 45px;
-  margin: 15px 15px 30px 30px;
+.navigation .ant-layout-sider-children {
   display: flex;
-  justify-content: space-evenly;
-  width: 160px;
+  flex-direction: column;
+  height: 100%;
+}
+
+.logo {
+  height: 60px;
+  display: flex;
+  align-items: center;
 }
 
 .sidebar-wraper {
-  background: #fff;
+  background: #ffffff;
   display: block;
 }
 
@@ -28,12 +32,8 @@
 }
 
 .mobile-sidebar-wraper .ant-drawer-body {
-  padding: 12px 0px !important;
+  padding: 0px !important;
 }
-
-/* .ant-btn.mobile-sidebar-btn {
-  display: none;
-} */
 
 .tabsNavigation span {
   background-color: transparent;
@@ -52,12 +52,6 @@
   .navigation {
     height: 100%;
   }
-
-  /* .ant-btn.mobile-sidebar-btn {
-    display: block;
-    position: absolute;
-    top: 21px;
-  } */
 
   .mobile-sidebar-wraper {
     display: block;

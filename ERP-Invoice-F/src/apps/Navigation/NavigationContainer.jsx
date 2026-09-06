@@ -173,7 +173,7 @@ function Sidebar({ collapsible, isMobile = false, onMenuClick }) {
   };
 
   const sidebarContent = (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div
         className="logo"
         onClick={() => {
@@ -182,10 +182,14 @@ function Sidebar({ collapsible, isMobile = false, onMenuClick }) {
         }}
         style={{
           cursor: 'pointer',
-          padding: '10px 20px',
+          padding: '16px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          borderBottom: '1px solid #edf0f5',
+          flexShrink: 0,
         }}
       >
-        <img src={logoIcon} alt="Logo" style={{ marginLeft: '-5px', height: '40px' }} />
+        <img src={logoIcon} alt="Logo" style={{ marginLeft: '-5px', height: '36px' }} />
 
         {!showLogoApp && (
           <img
@@ -194,25 +198,27 @@ function Sidebar({ collapsible, isMobile = false, onMenuClick }) {
             style={{
               marginTop: '3px',
               marginLeft: '10px',
-              height: '38px',
+              height: '32px',
             }}
           />
         )}
       </div>
-      <Menu
-        items={items}
-        mode="inline"
-        theme={'light'}
-        selectedKeys={[currentPath]}
-        onClick={() => {
-          if (onMenuClick) onMenuClick();
-        }}
-        style={{
-          width: '100%',
-          borderRight: 0,
-        }}
-      />
-    </>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: '10px' }}>
+        <Menu
+          items={items}
+          mode="inline"
+          theme={'light'}
+          selectedKeys={[currentPath]}
+          onClick={() => {
+            if (onMenuClick) onMenuClick();
+          }}
+          style={{
+            width: '100%',
+            borderRight: 0,
+          }}
+        />
+      </div>
+    </div>
   );
 
   if (isMobile) {
@@ -238,12 +244,14 @@ function Sidebar({ collapsible, isMobile = false, onMenuClick }) {
       className="navigation"
       width={256}
       style={{
-        overflow: 'auto',
+        overflow: 'hidden',
         height: '100vh',
-        position: 'relative',
-        bottom: '20px',
-        left: '20px',
-        top: '20px',
+        position: 'sticky',
+        top: 0,
+        left: 0,
+        zIndex: 100,
+        background: '#ffffff',
+        borderRight: '1px solid #edf0f5',
       }}
       theme={'light'}
     >
