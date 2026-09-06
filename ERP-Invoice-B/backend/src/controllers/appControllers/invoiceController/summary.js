@@ -39,7 +39,7 @@ const summary = async (req, res) => {
   };
 
   if (req.admin && req.admin._id) {
-    matchQuery.createdBy = req.admin._id;
+    matchQuery.createdBy = new mongoose.Types.ObjectId(req.admin._id);
   }
 
   const response = await Model.aggregate([
@@ -181,7 +181,7 @@ const summary = async (req, res) => {
   };
 
   if (req.admin && req.admin._id) {
-    unpaidMatchQuery.createdBy = req.admin._id;
+    unpaidMatchQuery.createdBy = new mongoose.Types.ObjectId(req.admin._id);
   }
 
   const unpaid = await Model.aggregate([

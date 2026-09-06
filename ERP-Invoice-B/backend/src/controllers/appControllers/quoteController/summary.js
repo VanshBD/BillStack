@@ -38,7 +38,7 @@ const summary = async (req, res) => {
   };
 
   if (req.admin && req.admin._id) {
-    matchQuery.createdBy = req.admin._id;
+    matchQuery.createdBy = new mongoose.Types.ObjectId(req.admin._id);
   }
 
   const result = await Model.aggregate([

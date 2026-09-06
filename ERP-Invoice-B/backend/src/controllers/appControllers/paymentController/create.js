@@ -10,10 +10,10 @@ const { calculate } = require('@/helpers');
 const create = async (req, res) => {
   const { error, value } = schema.validate(req.body);
   if (error) {
-    return res.status(400).json({ success:false, result:null, message:error.details[0]?.message });
+    return res.status(400).json({ success: false, result: null, message: error.details[0]?.message });
   }
   req.body = value;
-  // Creating a new document in the collection
+
   if (req.body.amount === 0) {
     return res.status(202).json({
       success: false,
@@ -22,10 +22,23 @@ const create = async (req, res) => {
     });
   }
 
-  const currentInvoice = await Invoice.findOne({
+  const invoiceQuery = {
     _id: req.body.invoice,
     removed: false,
-  });
+  };
+  if (req.admin && req.admin._id) {
+    invoiceQuery.createdBy = req.admin._id;
+  }
+
+  const currentInvoice = await Invoice.findOne(invoiceQuery);
+
+  if (!currentInvoice) {
+    return res.status(404).json({
+      success: false,
+      result: null,
+      message: 'Invoice not found or not owned by user',
+    });
+  }
 
   const {
     total: previousTotal,
@@ -51,13 +64,13 @@ const create = async (req, res) => {
     {
       _id: result._id.toString(),
       removed: false,
+      createdBy: req.admin._id,
     },
     { pdf: fileId },
     {
       new: true,
     }
   ).exec();
-  // Returning successfull response
 
   const { _id: paymentId, amount } = result;
   const { id: invoiceId, total, discount, credit } = currentInvoice;
@@ -70,14 +83,14 @@ const create = async (req, res) => {
       : 'unpaid';
 
   const invoiceUpdate = await Invoice.findOneAndUpdate(
-    { _id: req.body.invoice },
+    invoiceQuery,
     {
       $push: { payment: paymentId.toString() },
       $inc: { credit: amount },
       $set: { paymentStatus: paymentStatus },
     },
     {
-      new: true, // return the new result instead of the old one
+      new: true,
       runValidators: true,
     }
   ).exec();

@@ -29,24 +29,19 @@ const summary = async (req, res) => {
 
   const matchQuery = {
     removed: false,
-    // date: {
-    //   $gte: startDate.toDate(),
-    //   $lte: endDate.toDate(),
-    // },
   };
 
   if (req.admin && req.admin._id) {
-    matchQuery.createdBy = req.admin._id;
+    matchQuery.createdBy = new mongoose.Types.ObjectId(req.admin._id);
   }
 
-  // get total amount of invoices
   const result = await Model.aggregate([
     {
       $match: matchQuery,
     },
     {
       $group: {
-        _id: null, // Group all documents into a single group
+        _id: null,
         count: {
           $sum: 1,
         },
@@ -57,7 +52,7 @@ const summary = async (req, res) => {
     },
     {
       $project: {
-        _id: 0, // Exclude _id from the result
+        _id: 0,
         count: 1,
         total: 1,
       },

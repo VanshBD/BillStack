@@ -27,7 +27,7 @@ const summary = async (Model, req, res) => {
   };
 
   if (req.admin && req.admin._id) {
-    matchQuery.createdBy = req.admin._id;
+    matchQuery.createdBy = new mongoose.Types.ObjectId(req.admin._id);
   }
 
   const pipeline = [
@@ -53,6 +53,9 @@ const summary = async (Model, req, res) => {
           },
         ],
         activeClients: [
+          {
+            $match: matchQuery,
+          },
           {
             $lookup: {
               from: InvoiceModel.collection.name,

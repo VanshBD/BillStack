@@ -10,7 +10,7 @@ const summary = async (req, res) => {
     const matchConditions = { removed: false, ...match };
 
     if (req.admin && req.admin._id) {
-      matchConditions.createdBy = req.admin._id;
+      matchConditions.createdBy = new mongoose.Types.ObjectId(req.admin._id);
     }
 
     // Default aggregation if no group specified
