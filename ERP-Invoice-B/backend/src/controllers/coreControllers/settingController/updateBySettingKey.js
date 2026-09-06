@@ -1,31 +1,35 @@
 const mongoose = require('mongoose');
-
 const Model = mongoose.model('Setting');
 
 const updateBySettingKey = async (req, res) => {
-  const settingKey = req.params.settingKey || undefined;
+  const rawKey = req.params.settingKey || undefined;
 
-  if (!settingKey) {
+  if (!rawKey) {
     return res.status(202).json({
       success: false,
       result: null,
-      message: 'No settingKey provided ',
+      message: 'No settingKey provided',
     });
   }
+
+  const settingKey = rawKey.toLowerCase();
   const { settingValue } = req.body;
 
-  if (!settingValue) {
-    return res.status(202).json({
-      success: false,
-      result: null,
-      message: 'No settingValue provided ',
-    });
-  }
-  const query = { settingKey };
-  const updateData = { settingValue };
+  const existingDoc = await Model.findOne({ settingKey }).exec();
+  const settingCategory = existingDoc?.settingCategory || 'app_settings';
 
+  const query = { settingKey };
   if (req.admin && req.admin._id) {
     query.createdBy = req.admin._id;
+  }
+
+  const updateData = {
+    settingKey,
+    settingValue: settingValue !== undefined ? settingValue : null,
+    settingCategory,
+  };
+
+  if (req.admin && req.admin._id) {
     updateData.createdBy = req.admin._id;
   }
 
@@ -33,24 +37,17 @@ const updateBySettingKey = async (req, res) => {
     query,
     { $set: updateData },
     {
-      new: true, // return the new result instead of the old one
+      new: true,
       upsert: true,
       runValidators: true,
     }
   ).exec();
-  if (!result) {
-    return res.status(404).json({
-      success: false,
-      result: null,
-      message: 'No document found by this settingKey: ' + settingKey,
-    });
-  } else {
-    return res.status(200).json({
-      success: true,
-      result,
-      message: 'we update this document by this settingKey: ' + settingKey,
-    });
-  }
+
+  return res.status(200).json({
+    success: true,
+    result,
+    message: 'Successfully updated document by settingKey: ' + settingKey,
+  });
 };
 
 module.exports = updateBySettingKey;
