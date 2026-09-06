@@ -22,6 +22,7 @@ import { useMoney, useDate } from '@/settings';
 import { generate as uniqueId } from 'shortid';
 
 import { useCrudContext } from '@/context/crud';
+import useResponsive from '@/hooks/useResponsive';
 
 function AddNewItem({ config }) {
   const { crudContextAction } = useCrudContext();
@@ -34,7 +35,7 @@ function AddNewItem({ config }) {
   };
 
   return (
-    <Button onClick={handelClick} type="primary">
+    <Button onClick={handelClick} type="primary" style={{ width: '100%', whiteSpace: 'nowrap' }}>
       {ADD_NEW_ENTITY}
     </Button>
   );
@@ -46,6 +47,7 @@ export default function DataTable({ config, extra = [] }) {
   const translate = useLanguage();
   const { moneyFormatter } = useMoney();
   const { dateFormat } = useDate();
+  const { isMobile } = useResponsive();
   const dispatch = useDispatch();
 
   const items = [
@@ -133,7 +135,6 @@ export default function DataTable({ config, extra = [] }) {
                 default:
                   break;
               }
-              // else if (key === '2')handleCloseTask
             },
           }}
           trigger={['click']}
@@ -181,23 +182,49 @@ export default function DataTable({ config, extra = [] }) {
         backIcon={<ArrowLeftOutlined />}
         title={DATATABLE_TITLE}
         ghost={false}
-        extra={[
+        extra={
+          !isMobile
+            ? [
+                <Input
+                  key={`searchFilterDataTable`}
+                  onChange={filterTable}
+                  placeholder={translate('search')}
+                  allowClear
+                  style={{ width: '220px' }}
+                />,
+                <Button onClick={handelDataTableLoad} key="refreshBtn" icon={<RedoOutlined />}>
+                  {translate('Refresh')}
+                </Button>,
+                <AddNewItem key="addNewBtn" config={config} />,
+              ]
+            : undefined
+        }
+        style={{
+          padding: '16px 0px 8px',
+        }}
+      ></PageHeader>
+
+      {isMobile && (
+        <div
+          className="mobile-datatable-toolbar"
+          style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}
+        >
           <Input
-            key={`searchFilterDataTable}`}
             onChange={filterTable}
             placeholder={translate('search')}
             allowClear
-          />,
-          <Button onClick={handelDataTableLoad} key={`${uniqueId()}`} icon={<RedoOutlined />}>
-            {translate('Refresh')}
-          </Button>,
-
-          <AddNewItem key={`${uniqueId()}`} config={config} />,
-        ]}
-        style={{
-          padding: '20px 0px',
-        }}
-      ></PageHeader>
+            style={{ width: '100%' }}
+          />
+          <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+            <Button onClick={handelDataTableLoad} icon={<RedoOutlined />} style={{ flex: 1 }}>
+              {translate('Refresh')}
+            </Button>
+            <div style={{ flex: 1, display: 'flex' }}>
+              <AddNewItem config={config} />
+            </div>
+          </div>
+        </div>
+      )}
 
       <Table
         columns={dataTableColumns}
@@ -206,7 +233,7 @@ export default function DataTable({ config, extra = [] }) {
         pagination={pagination}
         loading={listIsLoading}
         onChange={handelDataTableLoad}
-        scroll={{ x: true }}
+        scroll={{ x: 'max-content' }}
       />
     </>
   );

@@ -190,11 +190,17 @@
 
 @media only screen and (max-width: 600px) {
   .layoutPadding {
-    padding: 50px 20px;
+    padding: 20px 16px;
   }
 
   .dashboardSpacing {
-    padding: 30px 20px;
-    margin: 70px auto;
+    padding: 20px 16px;
+    margin: 20px auto;
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  .layoutPadding {
+    padding: 16px 12px;
   }
 }

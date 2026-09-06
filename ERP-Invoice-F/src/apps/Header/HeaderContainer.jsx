@@ -13,9 +13,13 @@ import { FILE_BASE_URL } from '@/config/serverApiConfig';
 import useLanguage from '@/locale/useLanguage';
 
 
+import useResponsive from '@/hooks/useResponsive';
+import { MobileSidebar } from '@/apps/Navigation/NavigationContainer';
+
 export default function HeaderContent() {
   const currentAdmin = useSelector(selectCurrentAdmin);
   const { Header } = Layout;
+  const { isMobile } = useResponsive();
 
   const translate = useLanguage();
 
@@ -86,42 +90,41 @@ export default function HeaderContent() {
   return (
     <Header
       style={{
-        padding: '20px',
+        padding: isMobile ? '12px 16px' : '20px',
         background: '#ffffff',
         display: 'flex',
-        flexDirection: 'row-reverse',
-        justifyContent: 'flex-start',
-        gap: ' 15px',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: '15px',
+        width: '100%',
       }}
     >
-      <Dropdown
-        menu={{
-          items,
-        }}
-        trigger={['click']}
-        placement="bottomRight"
-        stye={{ width: '280px', float: 'right' }}
-      >
-        {/* <Badge dot> */}
-        <Avatar
-          className="last"
-          src={currentAdmin?.photo ? FILE_BASE_URL + currentAdmin?.photo : undefined}
-          style={{
-            color: '#f56a00',
-            backgroundColor: currentAdmin?.photo ? 'none' : '#fde3cf',
-            boxShadow: 'rgba(150, 190, 238, 0.35) 0px 0px 10px 2px',
-            float: 'right',
-            cursor: 'pointer',
+      {isMobile && <MobileSidebar />}
+
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+        <Dropdown
+          menu={{
+            items,
           }}
-          size="large"
+          trigger={['click']}
+          placement="bottomRight"
         >
-          {currentAdmin?.name?.charAt(0)?.toUpperCase()}
-        </Avatar>
-        {/* </Badge> */}
-      </Dropdown>
-
-      {/* <AppsButton /> */}
-
+          <Avatar
+            className="last"
+            src={currentAdmin?.photo ? FILE_BASE_URL + currentAdmin?.photo : undefined}
+            style={{
+              color: '#f56a00',
+              backgroundColor: currentAdmin?.photo ? 'none' : '#fde3cf',
+              boxShadow: 'rgba(150, 190, 238, 0.35) 0px 0px 10px 2px',
+              cursor: 'pointer',
+            }}
+            size="large"
+          >
+            {currentAdmin?.name?.charAt(0)?.toUpperCase()}
+          </Avatar>
+        </Dropdown>
+      </div>
     </Header>
   );
 }

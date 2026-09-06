@@ -20,6 +20,7 @@ export default function AutoCompleteAsync({
   onChange, /// this is for update
   onAddNew, /// optional handler for add-new action instead of redirect
   placeholder,
+  style,
 }) {
   const translate = useLanguage();
 
@@ -186,7 +187,7 @@ export default function AutoCompleteAsync({
         if (onChange) onChange(null, null);
       }}
       onChange={handleSelectChange}
-      style={{ minWidth: '220px' }}
+      style={{ minWidth: '220px', ...style }}
     >
       {selectOptions.map((optionField) => (
         <Select.Option

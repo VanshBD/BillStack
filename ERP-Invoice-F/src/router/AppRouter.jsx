@@ -1,9 +1,8 @@
-import { lazy, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 
-import {} from 'react-router-dom';
-import {} from 'react-router-dom';
 import { Navigate, useLocation, useRoutes } from 'react-router-dom';
 import { useAppContext } from '@/context/appContext';
+import PageLoader from '@/components/PageLoader';
 
 import routes from './routes';
 
@@ -40,5 +39,5 @@ export default function AppRouter() {
 
   let element = useRoutes(routesList);
 
-  return element;
+  return <Suspense fallback={<PageLoader />}>{element}</Suspense>;
 }

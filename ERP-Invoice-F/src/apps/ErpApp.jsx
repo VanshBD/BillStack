@@ -49,41 +49,38 @@ export default function ErpCrmApp() {
   // }, [appSettings]);
 
   if (settingIsloaded)
-    return (
+    return isMobile ? (
+      <Layout>
+        <HeaderContent />
+        <Content
+          style={{
+            margin: '10px auto 20px',
+            overflow: 'initial',
+            width: '100%',
+            padding: '0 12px',
+            maxWidth: 'none',
+          }}
+        >
+          <AppRouter />
+        </Content>
+      </Layout>
+    ) : (
       <Layout hasSider>
         <Navigation />
-
-        {isMobile ? (
-          <Layout style={{ marginLeft: 0 }}>
-            <HeaderContent />
-            <Content
-              style={{
-                margin: '15px auto 20px',
-                overflow: 'initial',
-                width: '100%',
-                padding: '0 12px',
-                maxWidth: 'none',
-              }}
-            >
-              <AppRouter />
-            </Content>
-          </Layout>
-        ) : (
-          <Layout>
-            <HeaderContent />
-            <Content
-              style={{
-                margin: '40px auto 30px',
-                overflow: 'initial',
-                width: '100%',
-                padding: '0 50px',
-                maxWidth: 1400,
-              }}
-            >
-              <AppRouter />
-            </Content>
-          </Layout>
-        )}
+        <Layout>
+          <HeaderContent />
+          <Content
+            style={{
+              margin: '40px auto 30px',
+              overflow: 'initial',
+              width: '100%',
+              padding: '0 50px',
+              maxWidth: 1400,
+            }}
+          >
+            <AppRouter />
+          </Content>
+        </Layout>
       </Layout>
     );
   else return <PageLoader />;

@@ -1,4 +1,8 @@
 require('module-alias/register');
+const dns = require('dns');
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 const mongoose = require('mongoose');
 const { globSync } = require('glob');
 const path = require('path');
@@ -14,7 +18,9 @@ if (major < 20) {
 // load centralized config and validation
 const config = require('./config');
 
-mongoose.connect(config.database).catch((err) => {
+mongoose.connect(config.database, {
+  serverSelectionTimeoutMS: 10000,
+}).catch((err) => {
   console.error('Initial MongoDB connection error:', err.message);
   process.exit(1);
 });

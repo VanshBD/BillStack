@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Button, Drawer, Layout, Menu } from 'antd';
+import { Button, Drawer, Layout, Menu, Modal } from 'antd';
 
 import { useAppContext } from '@/context/appContext';
 
@@ -9,6 +9,7 @@ import logoIcon from '@/style/images/logo-icon.png';
 import logoText from '@/style/images/logo-text.png';
 
 import useResponsive from '@/hooks/useResponsive';
+import usePwaInstall from '@/hooks/usePwaInstall';
 
 import {
   SettingOutlined,
@@ -29,6 +30,7 @@ import {
   ProductFilled,
   BankOutlined,
   FileTextOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -50,6 +52,28 @@ function Sidebar({ collapsible, isMobile = false, onMenuClick }) {
 
   const translate = useLanguage();
   const navigate = useNavigate();
+  const { triggerInstall } = usePwaInstall();
+
+  const handleInstallApp = async () => {
+    if (onMenuClick) onMenuClick();
+    const { nativePromptShown } = await triggerInstall();
+    if (!nativePromptShown) {
+      Modal.info({
+        title: '📱 Install BillStack App',
+        content: (
+          <div style={{ fontSize: '14px', lineHeight: '1.6', paddingTop: '8px' }}>
+            <p style={{ marginBottom: '10px' }}>
+              <strong>iOS (Safari):</strong> Tap the <strong>Share</strong> button <span style={{ fontSize: '16px' }}>⎋</span>, then scroll down and select <strong>"Add to Home Screen"</strong> <span style={{ fontSize: '16px' }}>➕</span>.
+            </p>
+            <p style={{ marginBottom: '0' }}>
+              <strong>Android (Chrome/Edge):</strong> Tap the browser menu <span style={{ fontSize: '16px' }}>⋮</span> and select <strong>"Install App"</strong> or <strong>"Add to Home screen"</strong>.
+            </p>
+          </div>
+        ),
+        okText: 'Got It!',
+      });
+    }
+  };
 
   const items = [
     {
@@ -113,6 +137,15 @@ function Sidebar({ collapsible, isMobile = false, onMenuClick }) {
       label: <Link to={'/bank-accounts'}>{translate('bank_accounts')}</Link>,
       icon: <BankOutlined />,
     },
+    {
+      key: 'installApp',
+      icon: <DownloadOutlined style={{ color: '#1890ff', fontWeight: 'bold' }} />,
+      label: (
+        <span onClick={handleInstallApp} style={{ color: '#1890ff', fontWeight: 600 }}>
+          {translate('Install App') || 'Install App'}
+        </span>
+      ),
+    },
   ];
 
   useEffect(() => {
@@ -139,28 +172,8 @@ function Sidebar({ collapsible, isMobile = false, onMenuClick }) {
     navMenu.collapse();
   };
 
-  return (
-    <Sider
-      collapsible={collapsible}
-      collapsed={collapsible ? isNavMenuClose : collapsible}
-      onCollapse={onCollapse}
-      className="navigation"
-      width={256}
-      style={{
-        overflow: 'auto',
-        height: '100vh',
-
-        position: isMobile ? 'absolute' : 'relative',
-        bottom: '20px',
-        ...(!isMobile && {
-          // border: 'none',
-          ['left']: '20px',
-          top: '20px',
-          // borderRadius: '8px',
-        }),
-      }}
-      theme={'light'}
-    >
+  const sidebarContent = (
+    <>
       <div
         className="logo"
         onClick={() => {
@@ -169,6 +182,7 @@ function Sidebar({ collapsible, isMobile = false, onMenuClick }) {
         }}
         style={{
           cursor: 'pointer',
+          padding: '10px 20px',
         }}
       >
         <img src={logoIcon} alt="Logo" style={{ marginLeft: '-5px', height: '40px' }} />
@@ -194,14 +208,51 @@ function Sidebar({ collapsible, isMobile = false, onMenuClick }) {
           if (onMenuClick) onMenuClick();
         }}
         style={{
-          width: 256,
+          width: '100%',
+          borderRight: 0,
         }}
       />
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <div
+        className="navigation-mobile"
+        style={{
+          height: '100%',
+          overflowY: 'auto',
+          background: '#ffffff',
+        }}
+      >
+        {sidebarContent}
+      </div>
+    );
+  }
+
+  return (
+    <Sider
+      collapsible={collapsible}
+      collapsed={collapsible ? isNavMenuClose : collapsible}
+      onCollapse={onCollapse}
+      className="navigation"
+      width={256}
+      style={{
+        overflow: 'auto',
+        height: '100vh',
+        position: 'relative',
+        bottom: '20px',
+        left: '20px',
+        top: '20px',
+      }}
+      theme={'light'}
+    >
+      {sidebarContent}
     </Sider>
   );
 }
 
-function MobileSidebar() {
+export function MobileSidebar() {
   const [visible, setVisible] = useState(false);
   const showDrawer = () => {
     setVisible(true);
@@ -217,9 +268,9 @@ function MobileSidebar() {
         size="large"
         onClick={showDrawer}
         className="mobile-sidebar-btn"
-        style={{ ['marginLeft']: 25 }}
+        style={{ marginLeft: 0, padding: '0 12px' }}
       >
-        <MenuOutlined style={{ fontSize: 18 }} />
+        <MenuOutlined style={{ fontSize: 20 }} />
       </Button>
       <Drawer
         width={250}
@@ -227,6 +278,7 @@ function MobileSidebar() {
         closable={false}
         onClose={onClose}
         open={visible}
+        styles={{ body: { padding: 0 } }}
       >
         <Sidebar collapsible={false} isMobile={true} onMenuClick={onClose} />
       </Drawer>

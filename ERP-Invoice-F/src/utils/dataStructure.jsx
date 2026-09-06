@@ -1,46 +1,9 @@
-import { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
-import { Switch, Tag } from 'antd';
-import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
+import { Tag } from 'antd';
 import { countryList } from '@/utils/countryList';
 import { generate as uniqueId } from 'shortid';
 import color from '@/utils/color';
-
-const InteractiveSwitch = ({ record, entity, fieldKey, dispatch }) => {
-  const [checked, setChecked] = useState(record[fieldKey]);
-
-  useEffect(() => {
-    setChecked(record[fieldKey]);
-  }, [record[fieldKey]]);
-
-  const handleChange = async (val) => {
-    setChecked(val);
-    if (entity && dispatch) {
-      try {
-        const { request } = await import('@/request');
-        const { crud } = await import('@/redux/crud/actions');
-        await request.update({
-          entity: entity,
-          id: record._id,
-          jsonData: { [fieldKey]: val }
-        });
-        dispatch(crud.list({ entity }));
-      } catch (err) {
-        console.error("Failed to toggle switch:", err);
-        setChecked(!val); // revert on error
-      }
-    }
-  };
-
-  return (
-    <Switch
-      checked={checked}
-      onChange={handleChange}
-      checkedChildren={<CheckOutlined />}
-      unCheckedChildren={<CloseOutlined />}
-    />
-  );
-};
+import InteractiveSwitch from '@/components/InteractiveSwitch';
 
 export const dataForRead = ({ fields, translate }) => {
   let columns = [];
@@ -233,7 +196,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat, en
 
     const type = field.type;
 
-    const truncate = (text, length = 20) => {
+    const truncate = (text, length = 35) => {
       if (typeof text !== 'string') return text;
       return text.length > length ? text.substring(0, length) + '...' : text;
     };
@@ -242,7 +205,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat, en
       title: field.label ? translate(field.label) : translate(key),
       dataIndex: keyIndex,
       render: (text) => {
-        return truncate(text, field.length || 20);
+        return truncate(text, field.length || 35);
       },
     };
 
@@ -254,7 +217,7 @@ export function dataForTable({ fields, translate, moneyFormatter, dateFormat, en
         const oldRender = column.render;
         column.render = (text, record) => {
           const processedText = oldRender ? oldRender(text, record) : text;
-          return truncate(processedText, field.length || 20);
+          return truncate(processedText, field.length || 35);
         };
       }
 

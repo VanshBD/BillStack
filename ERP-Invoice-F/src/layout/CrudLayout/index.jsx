@@ -38,11 +38,11 @@ const ContentBox = ({ children }) => {
     <Content
       className="whiteBox shadow layoutPadding"
       style={{
-        margin: isMobile ? '15px auto' : '30px auto',
+        margin: isMobile ? '10px auto' : '30px auto',
         width: '100%',
         maxWidth: '100%',
         flex: 'none',
-        padding: isMobile ? '16px' : undefined,
+        padding: isMobile ? '14px 10px' : undefined,
       }}
     >
       {children}

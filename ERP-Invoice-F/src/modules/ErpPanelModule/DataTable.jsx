@@ -21,6 +21,7 @@ import { selectListItems } from '@/redux/erp/selectors';
 import { useErpContext } from '@/context/erp';
 import { generate as uniqueId } from 'shortid';
 import { useNavigate } from 'react-router-dom';
+import useResponsive from '@/hooks/useResponsive';
 
 import { DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
 
@@ -33,7 +34,7 @@ function AddNewItem({ config }) {
   };
 
   return (
-    <Button onClick={handleClick} type="primary" icon={<PlusOutlined />}>
+    <Button onClick={handleClick} type="primary" icon={<PlusOutlined />} style={{ width: '100%', whiteSpace: 'nowrap' }}>
       {ADD_NEW_ENTITY}
     </Button>
   );
@@ -41,6 +42,7 @@ function AddNewItem({ config }) {
 
 export default function DataTable({ config, extra = [] }) {
   const translate = useLanguage();
+  const { isMobile } = useResponsive();
   let { entity, dataTableColumns, disableAdd = false, searchConfig } = config;
 
   const { DATATABLE_TITLE } = config;
@@ -180,27 +182,54 @@ export default function DataTable({ config, extra = [] }) {
         ghost={true}
         onBack={() => window.history.back()}
         backIcon={<ArrowLeftOutlined />}
-        extra={[
+        extra={
+          !isMobile
+            ? [
+                <AutoCompleteAsync
+                  key={`${uniqueId()}`}
+                  entity={searchConfig?.entity}
+                  displayLabels={['name']}
+                  searchFields={'name'}
+                  onChange={filterTable}
+                />,
+                <Button onClick={handelDataTableLoad} key={`${uniqueId()}`} icon={<RedoOutlined />}>
+                  {translate('Refresh')}
+                </Button>,
+
+                !disableAdd && <AddNewItem config={config} key={`${uniqueId()}`} />,
+              ]
+            : undefined
+        }
+        style={{
+          padding: '20px 0px',
+        }}
+      ></PageHeader>
+
+      {isMobile && (
+        <div
+          className="mobile-datatable-toolbar"
+          style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}
+        >
           <AutoCompleteAsync
             key={`${uniqueId()}`}
             entity={searchConfig?.entity}
             displayLabels={['name']}
             searchFields={'name'}
             onChange={filterTable}
-            // redirectLabel={'Add New Client'}
-            // withRedirect
-            // urlToRedirect={'/customer'}
-          />,
-          <Button onClick={handelDataTableLoad} key={`${uniqueId()}`} icon={<RedoOutlined />}>
-            {translate('Refresh')}
-          </Button>,
-
-          !disableAdd && <AddNewItem config={config} key={`${uniqueId()}`} />,
-        ]}
-        style={{
-          padding: '20px 0px',
-        }}
-      ></PageHeader>
+            style={{ width: '100%' }}
+          />
+          <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+            <Button onClick={handelDataTableLoad} icon={<RedoOutlined />} style={{ flex: 1 }}>
+              {translate('Refresh')}
+            </Button>
+            {!disableAdd && (
+              <div style={{ flex: 1, display: 'flex' }}>
+                <AddNewItem config={config} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <Table
         columns={dataTableColumns}
@@ -209,7 +238,7 @@ export default function DataTable({ config, extra = [] }) {
         pagination={pagination}
         loading={listIsLoading}
         onChange={handelDataTableLoad}
-        scroll={{ x: true }}
+        scroll={{ x: 'max-content' }}
       />
     </>
   );

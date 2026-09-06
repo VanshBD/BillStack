@@ -94,12 +94,52 @@ h6 {
     width: 100%;
     margin-top: 8px;
     gap: 8px;
+    display: flex;
+    align-items: center;
   }
   .ant-page-header-heading-extra > * {
     max-width: 100%;
   }
   .ant-table-wrapper {
     overflow-x: auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .ant-page-header {
+    padding: 12px 0px !important;
+  }
+  .ant-page-header-heading-title {
+    font-size: 18px !important;
+    white-space: normal;
+  }
+  .ant-page-header-heading-extra {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 8px;
+  }
+  .ant-page-header-heading-extra > .ant-input-affix-wrapper,
+  .ant-page-header-heading-extra > input {
+    width: 100% !important;
+  }
+  .table-actions-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .table-actions-row > button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .ant-table-pagination {
+    flex-wrap: wrap;
+    justify-content: center !important;
   }
 }
 @media (prefers-reduced-motion: no-preference) {
