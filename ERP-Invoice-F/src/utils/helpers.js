@@ -45,10 +45,17 @@ export function valueByString(obj, string, devider) {
   if (devider === undefined) {
     devider = '|';
   }
-  return string
-    .split(devider)
+  const keys = string.split(devider);
+  if (keys.length === 1) {
+    return get(obj, keys[0]);
+  }
+  return keys
     .map(function (key) {
-      return get(obj, key);
+      const v = get(obj, key);
+      if (typeof v === 'object' && v !== null) {
+        return v.taxName ? `${v.taxName}${v.taxValue !== undefined ? ` (${v.taxValue}%)` : ''}` : (v.name || v.label || v.title || '');
+      }
+      return v;
     })
     .join(' ');
 }
