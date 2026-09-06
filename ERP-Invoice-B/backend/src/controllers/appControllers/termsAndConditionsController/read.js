@@ -5,9 +5,12 @@ const Model = mongoose.model('TermsAndConditions');
 const read = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const terms = await Model.findOne({ _id: id, removed: false, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) })
-      .populate('createdBy', 'name email');
+    const query = { _id: id, removed: false };
+    if (req.admin && req.admin._id) {
+      query.createdBy = req.admin._id;
+    }
+
+    const terms = await Model.findOne(query).populate('createdBy', 'name email');
     
     if (!terms) {
       return res.status(404).json({

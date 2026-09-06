@@ -55,12 +55,11 @@ const createBankAccount = async (bankData, createdBy) => {
   try {
     const BankAccount = mongoose.model('BankAccount');
     
-    // If this is set as default, unset other default accounts
+    // If this is set as default, unset other default accounts for this user ONLY
     if (bankData.isDefault) {
-      await BankAccount.updateMany(
-        { removed: false, isDefault: true },
-        { isDefault: false }
-      );
+      const unsetQuery = { removed: false, isDefault: true };
+      if (createdBy) unsetQuery.createdBy = createdBy;
+      await BankAccount.updateMany(unsetQuery, { isDefault: false });
     }
     
     const newBankAccount = new BankAccount({
@@ -77,20 +76,22 @@ const createBankAccount = async (bankData, createdBy) => {
   }
 };
 
-const updateBankAccount = async (bankAccountId, updateData) => {
+const updateBankAccount = async (bankAccountId, updateData, adminId) => {
   try {
     const BankAccount = mongoose.model('BankAccount');
     
-    // If this is set as default, unset other default accounts
+    // If this is set as default, unset other default accounts for this user ONLY
     if (updateData.isDefault) {
-      await BankAccount.updateMany(
-        { removed: false, isDefault: true, _id: { $ne: bankAccountId } },
-        { isDefault: false }
-      );
+      const unsetQuery = { removed: false, isDefault: true, _id: { $ne: bankAccountId } };
+      if (adminId) unsetQuery.createdBy = adminId;
+      await BankAccount.updateMany(unsetQuery, { isDefault: false });
     }
     
+    const updateQuery = { _id: bankAccountId, removed: false };
+    if (adminId) updateQuery.createdBy = adminId;
+
     const updatedAccount = await BankAccount.findOneAndUpdate(
-      { _id: bankAccountId, removed: false },
+      updateQuery,
       {
         ...updateData,
         updated: new Date()
@@ -105,15 +106,14 @@ const updateBankAccount = async (bankAccountId, updateData) => {
   }
 };
 
-const deleteBankAccount = async (bankAccountId) => {
+const deleteBankAccount = async (bankAccountId, adminId) => {
   try {
     const BankAccount = mongoose.model('BankAccount');
     
-    // Don't allow deletion of default account
-    const accountToDelete = await BankAccount.findOne({
-      _id: bankAccountId,
-      removed: false
-    });
+    const findQuery = { _id: bankAccountId, removed: false };
+    if (adminId) findQuery.createdBy = adminId;
+
+    const accountToDelete = await BankAccount.findOne(findQuery);
     
     if (!accountToDelete) {
       throw new Error('Bank account not found');
@@ -124,7 +124,7 @@ const deleteBankAccount = async (bankAccountId) => {
     }
     
     await BankAccount.findOneAndUpdate(
-      { _id: bankAccountId },
+      findQuery,
       { 
         removed: true,
         updated: new Date()

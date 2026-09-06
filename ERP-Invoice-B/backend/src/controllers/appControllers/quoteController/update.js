@@ -14,12 +14,16 @@ const update = async (req, res) => {
     return res.status(400).json({ success: false, result: null, message: error.details[0]?.message });
   }
 
-  // Permission check FIRST — before any heavy computation
-  const previousQuote = await Model.findOne({ _id: req.params.id, removed: false });
+  const query = { _id: req.params.id, removed: false };
+  if (req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
+
+  const previousQuote = await Model.findOne(query);
   if (!previousQuote) {
     return res.status(404).json({ success: false, result: null, message: 'Quote not found' });
   }
-  if (req.admin.role !== 'owner' && previousQuote.createdBy.toString() !== req.admin._id.toString()) {
+  if (previousQuote.createdBy && req.admin && req.admin._id && previousQuote.createdBy.toString() !== req.admin._id.toString()) {
     return res.status(403).json({ success: false, result: null, message: 'Not authorized to update this quote' });
   }
 
@@ -128,7 +132,7 @@ const update = async (req, res) => {
     delete body.currency;
   }
 
-  const result = await Model.findOneAndUpdate({ _id: req.params.id, removed: false }, body, {
+  const result = await Model.findOneAndUpdate(query, body, {
     new: true,
   }).exec();
 

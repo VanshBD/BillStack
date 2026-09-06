@@ -10,7 +10,7 @@ const { calculate } = require('@/helpers');
 const update = async (req, res) => {
   const { error, value } = schema.validate(req.body);
   if (error) {
-    return res.status(400).json({ success:false, result:null, message:error.details[0]?.message });
+    return res.status(400).json({ success: false, result: null, message: error.details[0]?.message });
   }
   req.body = value;
 
@@ -21,17 +21,19 @@ const update = async (req, res) => {
       message: `The Minimum Amount couldn't be 0`,
     });
   }
-  // Find document by id and updates with the required fields
-  const previousPayment = await Model.findOne({
-    _id: req.params.id,
-    removed: false,
-  }).populate('invoice');
+
+  const query = { _id: req.params.id, removed: false };
+  if (req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
+
+  const previousPayment = await Model.findOne(query).populate('invoice');
 
   if (!previousPayment) {
-    return res.status(404).json({ success:false, result:null, message:'Payment not found' });
+    return res.status(404).json({ success: false, result: null, message: 'Payment not found' });
   }
-  if (req.admin.role !== 'owner' && previousPayment.createdBy.toString() !== req.admin._id.toString()) {
-    return res.status(403).json({ success:false, result:null, message:'Not authorized to update this payment' });
+  if (previousPayment.createdBy && req.admin && req.admin._id && previousPayment.createdBy.toString() !== req.admin._id.toString()) {
+    return res.status(403).json({ success: false, result: null, message: 'Not authorized to update this payment' });
   }
 
   const { amount: previousAmount } = previousPayment;
@@ -70,10 +72,10 @@ const update = async (req, res) => {
   };
 
   const result = await Model.findOneAndUpdate(
-    { _id: req.params.id, removed: false },
+    query,
     { $set: updates },
     {
-      new: true, // return the new result instead of the old one
+      new: true,
     }
   ).exec();
 
@@ -86,14 +88,14 @@ const update = async (req, res) => {
       },
     },
     {
-      new: true, // return the new result instead of the old one
+      new: true,
     }
   ).exec();
 
   return res.status(200).json({
     success: true,
     result,
-    message: 'Successfully updated the Payment ',
+    message: 'Successfully updated the Payment',
   });
 };
 

@@ -53,6 +53,42 @@ const create = async (userModel, req, res) => {
   });
   await passwordDoc.save();
 
+  // Provision default Bank Account for the new user
+  try {
+    const BankAccount = mongoose.model('BankAccount');
+    await new BankAccount({
+      accountHolderName: `${name} ${surname || ''}`.trim() || 'Account Holder',
+      bankName: 'Main Bank Account',
+      accountNumber: '123456789012',
+      ifscCode: 'BANK0001234',
+      branchName: 'Main Branch',
+      isDefault: true,
+      enabled: true,
+      createdBy: newUser._id,
+      created: new Date(),
+      updated: new Date()
+    }).save();
+  } catch (e) {
+    console.error('Error auto-seeding bank account for new user:', e);
+  }
+
+  // Provision default Terms & Conditions for the new user
+  try {
+    const TermsAndConditions = mongoose.model('TermsAndConditions');
+    await new TermsAndConditions({
+      title: 'Standard Payment & Invoice Terms',
+      content: '1. Payment is due within 15 days from the date of invoice.\n2. Overdue payments will incur an interest charge of 1.5% per month.\n3. Goods or services once delivered/rendered cannot be returned or cancelled without written authorization.',
+      isDefault: true,
+      enabled: true,
+      type: 'invoice',
+      createdBy: newUser._id,
+      created: new Date(),
+      updated: new Date()
+    }).save();
+  } catch (e) {
+    console.error('Error auto-seeding terms & conditions for new user:', e);
+  }
+
   return res.status(200).json({
     success: true,
     result: newUser,

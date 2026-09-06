@@ -4,16 +4,20 @@ const Model = mongoose.model('BankAccount');
 
 const summary = async (req, res) => {
   try {
-    const totalAccounts = await Model.countDocuments({ removed: false });
-    const defaultAccounts = await Model.countDocuments({ removed: false, isDefault: true });
+    const baseQuery = { removed: false };
+    if (req.admin && req.admin._id) {
+      baseQuery.createdBy = req.admin._id;
+    }
+
+    const totalAccounts = await Model.countDocuments(baseQuery);
+    const defaultAccounts = await Model.countDocuments({ ...baseQuery, isDefault: true });
     const customAccounts = totalAccounts - defaultAccounts;
     
-    // Get accounts created in last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
     const recentAccounts = await Model.countDocuments({
-      removed: false,
+      ...baseQuery,
       created: { $gte: thirtyDaysAgo }
     });
 

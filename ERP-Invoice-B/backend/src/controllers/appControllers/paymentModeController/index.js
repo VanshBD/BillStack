@@ -18,7 +18,6 @@ methods.create = async (req, res) => {
     await Model.updateMany({ ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) }, { isDefault: false });
   }
 
-  // check duplicate name
   const existing = await Model.findOne({ name: req.body.name, removed: false, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) });
   if (existing) {
     return res.status(400).json({ success: false, result: null, message: 'Payment mode name already exists' });
@@ -62,22 +61,23 @@ methods.update = async (req, res) => {
     removed: false,
     ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {})
   }).exec();
+
+  if (!paymentMode) {
+    return res.status(404).json({ success: false, result: null, message: 'Payment mode not found' });
+  }
+
   const { isDefault = paymentMode.isDefault, enabled = paymentMode.enabled } = req.body;
 
-  // if isDefault:false , we update first - isDefault:true
-  // if enabled:false and isDefault:true , we update first - isDefault:true
   if (!isDefault || (!enabled && isDefault)) {
     await Model.findOneAndUpdate({ _id: { $ne: id }, enabled: true, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) }, { isDefault: true });
   }
 
-  // if isDefault:true and enabled:true, we update other paymentMode and make is isDefault:false
   if (isDefault && enabled) {
     await Model.updateMany({ _id: { $ne: id }, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) }, { isDefault: false });
   }
 
   const paymentModeCount = await Model.countDocuments({ ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) });
 
-  // if enabled:false and it's only one exist, we can't disable
   if ((!enabled || !isDefault) && paymentModeCount <= 1) {
     return res.status(422).json({
       success: false,
@@ -86,7 +86,7 @@ methods.update = async (req, res) => {
     });
   }
 
-  const result = await Model.findOneAndUpdate({ _id: id }, req.body, {
+  const result = await Model.findOneAndUpdate({ _id: id, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) }, req.body, {
     new: true,
   });
 

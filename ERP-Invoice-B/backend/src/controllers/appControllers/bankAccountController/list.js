@@ -1,15 +1,13 @@
 const mongoose = require('mongoose');
 
 const Model = mongoose.model('BankAccount');
-const { getAllBankAccounts } = require('@/helpers/bankHelper');
 
 const list = async (req, res) => {
   try {
     const { page = 1, limit = 10, items, search = '' } = req.query;
-    const actualLimit = items || limit; // Handle both 'items' and 'limit' parameters
+    const actualLimit = items || limit;
     const skip = (page - 1) * actualLimit;
 
-    // Build search query
     const searchQuery = {
       removed: false,
       ...(search && {
@@ -22,15 +20,36 @@ const list = async (req, res) => {
       })
     };
 
-    if (req.admin && req.admin._id) searchQuery.createdBy = req.admin._id;
-    const bankAccounts = await Model.find(searchQuery)
+    if (req.admin && req.admin._id) {
+      searchQuery.createdBy = req.admin._id;
+    }
+
+    let bankAccounts = await Model.find(searchQuery)
       .populate('createdBy', 'name email')
       .sort({ isDefault: -1, created: -1 })
       .skip(skip)
       .limit(parseInt(actualLimit));
 
-    const total = await Model.countDocuments(searchQuery);
-    
+    let total = await Model.countDocuments(searchQuery);
+
+    if (total === 0 && !search && req.admin && req.admin._id) {
+      const defaultAccount = await new Model({
+        accountHolderName: `${req.admin.name || ''} ${req.admin.surname || ''}`.trim() || 'Account Holder',
+        bankName: 'Main Bank Account',
+        accountNumber: '123456789012',
+        ifscCode: 'BANK0001234',
+        branchName: 'Main Branch',
+        isDefault: true,
+        enabled: true,
+        createdBy: req.admin._id,
+        created: new Date(),
+        updated: new Date()
+      }).save();
+
+      bankAccounts = [defaultAccount];
+      total = 1;
+    }
+
     return res.status(200).json({
       success: true,
       result: bankAccounts,

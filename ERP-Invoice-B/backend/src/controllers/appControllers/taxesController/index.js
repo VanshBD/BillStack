@@ -13,7 +13,6 @@ methods.create = async (req, res) => {
   }
   req.body = value;
 
-  // Enforce that disabled taxes cannot be set as default
   if (req.body.enabled === false) {
     req.body.isDefault = false;
   }
@@ -22,7 +21,6 @@ methods.create = async (req, res) => {
     req.body.enabled = true;
     await Model.updateMany({ ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) }, { isDefault: false });
   } else {
-    // If no default active taxes, make this default if enabled
     const activeDefaultCount = await Model.countDocuments({
       removed: false,
       isDefault: true,
@@ -34,7 +32,6 @@ methods.create = async (req, res) => {
     }
   }
 
-  // duplicate name
   const existing = await Model.findOne({ taxName: req.body.taxName, removed: false, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) });
   if (existing) {
     return res.status(400).json({ success: false, result: null, message: 'Tax name already exists' });
@@ -68,7 +65,6 @@ methods.update = async (req, res) => {
   req.body = value;
   const { id } = req.params;
 
-  // duplicate name check (excluding current record)
   const dup = await Model.findOne({ taxName: req.body.taxName, removed: false, _id: { $ne: id }, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) });
   if (dup) {
     return res.status(400).json({ success: false, result: null, message: 'Tax name already exists' });
@@ -77,20 +73,19 @@ methods.update = async (req, res) => {
   const tax = await Model.findOne({
     _id: id,
     removed: false,
+    ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {})
   }).exec();
 
   if (!tax) {
     return res.status(404).json({ success: false, result: null, message: 'Tax not found' });
   }
 
-  // Support partial or complete updates safely
   const isDefault = req.body.isDefault !== undefined ? req.body.isDefault : tax.isDefault;
   const enabled = req.body.enabled !== undefined ? req.body.enabled : tax.enabled;
 
   req.body.isDefault = isDefault;
   req.body.enabled = enabled;
 
-  // Force isDefault to false if tax is disabled
   if (req.body.enabled === false) {
     req.body.isDefault = false;
   }
@@ -111,7 +106,6 @@ methods.update = async (req, res) => {
     }
   }
 
-  // Enforce isDefault logic
   if (req.body.isDefault && req.body.enabled !== false) {
     req.body.enabled = true;
     await Model.updateMany({ _id: { $ne: id }, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) }, { isDefault: false });
@@ -119,7 +113,6 @@ methods.update = async (req, res) => {
 
   const taxesCount = await Model.countDocuments({ removed: false, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) });
 
-  // if enabled:false and it's only one exist, we can't disable
   if (req.body.enabled === false && taxesCount <= 1) {
     return res.status(422).json({
       success: false,
@@ -128,7 +121,7 @@ methods.update = async (req, res) => {
     });
   }
 
-  const result = await Model.findOneAndUpdate({ _id: id }, req.body, {
+  const result = await Model.findOneAndUpdate({ _id: id, ...(req.admin && req.admin._id ? { createdBy: req.admin._id } : {}) }, req.body, {
     new: true,
   });
 

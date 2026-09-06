@@ -6,8 +6,9 @@ const { deleteBankAccount } = require('@/helpers/bankHelper');
 const deleteBankAccountController = async (req, res) => {
   try {
     const { id } = req.params;
+    const adminId = req.admin && req.admin._id ? req.admin._id : null;
     
-    const result = await deleteBankAccount(id);
+    const result = await deleteBankAccount(id, adminId);
     
     return res.status(200).json({
       success: true,

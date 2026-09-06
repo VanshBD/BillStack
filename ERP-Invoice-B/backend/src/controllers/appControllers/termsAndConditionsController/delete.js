@@ -6,8 +6,12 @@ const deleteTerms = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Check if terms exist and are not default
-    const existingTerms = await Model.findOne({ _id: id, removed: false });
+    const query = { _id: id, removed: false };
+    if (req.admin && req.admin._id) {
+      query.createdBy = req.admin._id;
+    }
+
+    const existingTerms = await Model.findOne(query);
     if (!existingTerms) {
       return res.status(404).json({
         success: false,
@@ -25,7 +29,7 @@ const deleteTerms = async (req, res) => {
     }
 
     await Model.findOneAndUpdate(
-      { _id: id },
+      query,
       { 
         removed: true,
         updated: new Date()

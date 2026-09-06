@@ -3,26 +3,26 @@ const mongoose = require('mongoose');
 const Model = mongoose.model('Quote');
 
 const read = async (req, res) => {
-  // Find document by id
-  const result = await Model.findOne({
-    _id: req.params.id,
-    removed: false,
-  })
+  const query = { _id: req.params.id, removed: false };
+  if (req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
+
+  const result = await Model.findOne(query)
     .populate('createdBy', 'name')
     .exec();
-  // If no results found, return document not found
+
   if (!result) {
     return res.status(404).json({
       success: false,
       result: null,
-      message: 'No document found ',
+      message: 'No document found',
     });
   } else {
-    // Return success resposne
     return res.status(200).json({
       success: true,
       result,
-      message: 'we found this document ',
+      message: 'we found this document',
     });
   }
 };

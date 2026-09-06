@@ -4,16 +4,20 @@ const Model = mongoose.model('TermsAndConditions');
 
 const summary = async (req, res) => {
   try {
-    const totalTerms = await Model.countDocuments({ removed: false });
-    const defaultTerms = await Model.countDocuments({ removed: false, isDefault: true });
+    const baseQuery = { removed: false };
+    if (req.admin && req.admin._id) {
+      baseQuery.createdBy = req.admin._id;
+    }
+
+    const totalTerms = await Model.countDocuments(baseQuery);
+    const defaultTerms = await Model.countDocuments({ ...baseQuery, isDefault: true });
     const customTerms = totalTerms - defaultTerms;
     
-    // Get terms created in last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
     const recentTerms = await Model.countDocuments({
-      removed: false,
+      ...baseQuery,
       created: { $gte: thirtyDaysAgo }
     });
 

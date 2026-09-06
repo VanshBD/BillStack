@@ -19,15 +19,16 @@ const update = async (req, res) => {
     });
   }
 
-  // Permission check first — before any DB work
-  const previousInvoice = await Model.findOne({
-    _id: req.params.id,
-    removed: false,
-  });
+  const query = { _id: req.params.id, removed: false };
+  if (req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
+
+  const previousInvoice = await Model.findOne(query);
   if (!previousInvoice) {
     return res.status(404).json({ success: false, result: null, message: 'Invoice not found' });
   }
-  if (req.admin.role !== 'owner' && previousInvoice.createdBy.toString() !== req.admin._id.toString()) {
+  if (previousInvoice.createdBy && req.admin && req.admin._id && previousInvoice.createdBy.toString() !== req.admin._id.toString()) {
     return res.status(403).json({ success: false, result: null, message: 'Not authorized to update this invoice' });
   }
   const { credit } = previousInvoice;
@@ -144,7 +145,7 @@ const update = async (req, res) => {
     calculate.sub(total, discount) === credit ? 'paid' : credit > 0 ? 'partially' : 'unpaid';
   body['paymentStatus'] = paymentStatus;
 
-  const result = await Model.findOneAndUpdate({ _id: req.params.id, removed: false }, body, {
+  const result = await Model.findOneAndUpdate(query, body, {
     new: true, // return the new result instead of the old one
   }).exec();
 

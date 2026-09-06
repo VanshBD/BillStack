@@ -7,9 +7,12 @@ const Category = mongoose.model('Category');
  */
 const remove = async (req, res) => {
   const id = req.params.id;
+  const query = { _id: id };
+  if (req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
 
-  // Try to delete the document physically
-  const result = await Category.deleteOne({ _id: id }).exec();
+  const result = await Category.deleteOne(query).exec();
 
   if (!result || result.deletedCount === 0) {
     return res.status(404).json({ success: false, result: null, message: 'Category not found' });

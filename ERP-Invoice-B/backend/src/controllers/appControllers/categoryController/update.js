@@ -16,7 +16,12 @@ const update = async (req, res) => {
   }
 
   const id = req.params.id;
-  const updated = await Model.findOneAndUpdate({ _id: id }, { $set: value }, { new: true }).exec();
+  const query = { _id: id };
+  if (req.admin && req.admin._id) {
+    query.createdBy = req.admin._id;
+  }
+
+  const updated = await Model.findOneAndUpdate(query, { $set: value }, { new: true }).exec();
   if (!updated) {
     return res.status(404).json({ success: false, result: null, message: 'Category not found' });
   }

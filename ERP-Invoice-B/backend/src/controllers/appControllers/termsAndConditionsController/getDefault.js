@@ -11,42 +11,28 @@ const getDefault = async (req, res) => {
       query.createdBy = req.admin._id;
     }
 
-    // Try to find default terms first
     let defaultTerms = await Model.findOne({ 
       ...query,
       isDefault: true 
     }).populate('createdBy', 'name email');
     
-    // If no default terms, get the first available terms
     if (!defaultTerms) {
       defaultTerms = await Model.findOne(query)
       .sort({ created: 1 })
       .populate('createdBy', 'name email');
     }
     
-    // If still no terms, return default from settings
-    if (!defaultTerms) {
-      const Setting = mongoose.model('Setting');
-      const settingKey = type === 'invoice' ? 'default_invoice_terms' : 'default_quote_terms';
-      
-      const termsSetting = await Setting.findOne({
-        settingKey: settingKey,
+    if (!defaultTerms && req.admin && req.admin._id) {
+      defaultTerms = await new Model({
+        title: 'Standard Payment & Invoice Terms',
+        content: '1. Payment is due within 15 days from the date of invoice.\n2. Overdue payments will incur an interest charge of 1.5% per month.\n3. Goods or services once delivered/rendered cannot be returned or cancelled without written authorization.',
+        isDefault: true,
         enabled: true,
-        removed: false
-      });
-      
-      if (termsSetting) {
-        return res.status(200).json({
-          success: true,
-          result: {
-            _id: 'default',
-            title: type === 'invoice' ? 'Default Invoice Terms' : 'Default Quote Terms',
-            content: termsSetting.settingValue,
-            isDefault: true
-          },
-          message: 'Default terms and conditions retrieved successfully',
-        });
-      }
+        type: type,
+        createdBy: req.admin._id,
+        created: new Date(),
+        updated: new Date()
+      }).save();
     }
     
     return res.status(200).json({
